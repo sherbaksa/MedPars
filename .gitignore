@@ -55,3 +55,7 @@ Thumbs.db
 
 # PyCharm
 .idea/
+
+# Upload directories
+*/instance/uploads/
+instance/uploads/
