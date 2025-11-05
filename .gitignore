@@ -1,6 +1,8 @@
 instance/*
 !.gitkeep
 .env
+.idea
+*.xlsx
 # Virtual environments
 venv/
 env/
