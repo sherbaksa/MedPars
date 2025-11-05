@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Загрузка файла · MedPars{% endblock %}
+{% block content %}
+  <div class="content-card">
+    <h2>Загрузка Excel файла</h2>
+    <p style="color: var(--text-secondary);">
+      Поддерживаются форматы <strong>.xlsx</strong> и <strong>.xls</strong>. Максимальный размер — 20 МБ.
+    </p>
+
+    <form class="no-print" action="{{ url_for('ui.upload_post') }}" method="post" enctype="multipart/form-data" style="margin-top: 20px;">
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <input type="file" name="file" accept=".xlsx,.xls" required style="flex: 1; min-width: 250px;">
+        <button type="submit">📤 Загрузить</button>
+      </div>
+    </form>
+
+    <details style="margin-top:24px; padding: 16px; background: var(--bg-gray); border-radius: 8px;">
+      <summary style="cursor: pointer; font-weight: 500; color: var(--primary-blue);">ℹ️ Где сохраняются файлы?</summary>
+      <p style="margin: 12px 0 0 0; color: var(--text-secondary);">
+        Файлы сохраняются в папке <code style="background: white; padding: 2px 6px; border-radius: 4px;">instance/uploads/</code>
+        внутри проекта. Имя файла содержит отметку времени, чтобы избежать перезаписи.
+        Все загруженные файлы автоматически конвертируются в формат .xlsx.
+      </p>
+    </details>
+  </div>
+{% endblock %}

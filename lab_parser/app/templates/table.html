@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Таблица · MedPars{% endblock %}
+{% block content %}
+  <div class="content-card">
+    <h2>Таблица записей</h2>
+
+    <div class="controls no-print">
+      <input id="q" type="search" placeholder="Поиск (ФИО, образец, отделение, результат)" style="min-width:320px;">
+      <select id="gender">
+        <option value="">Пол: любой</option>
+      </select>
+      <select id="department" style="min-width:260px;">
+        <option value="">Отделение: любое</option>
+      </select>
+      <button id="apply">Применить</button>
+      <button id="reset" class="secondary">Сбросить</button>
+      <button onclick="window.print()">Печать</button>
+    </div>
+
+    <div id="meta"></div>
+
+    <!-- Пагинация сверху -->
+    <div class="controls no-print">
+      <button id="prev-top">← Назад</button>
+      <div id="page-numbers-top"></div>
+      <button id="next-top">Вперёд →</button>
+      <span id="pageinfo-top"></span>
+      <select id="per-page-top">
+        <option value="10">10 на странице</option>
+        <option value="20">20 на странице</option>
+        <option value="50">50 на странице</option>
+        <option value="100">100 на странице</option>
+      </select>
+    </div>
+
+    <table id="records">
+      <thead>
+        <tr id="table-header">
+          <th>#</th>
+          <th>ФИО</th>
+          <th>Пол</th>
+          <th>Возраст</th>
+          <th>ДР</th>
+          <th>Идентификатор</th>
+          <th>Отделение</th>
+          <!-- Динамические колонки тестов добавятся сюда -->
+          <th>Результат (полный)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <!-- Пагинация снизу -->
+    <div class="controls no-print">
+      <button id="prev-bottom">← Назад</button>
+      <div id="page-numbers-bottom"></div>
+      <button id="next-bottom">Вперёд →</button>
+      <span id="pageinfo-bottom"></span>
+      <select id="per-page-bottom">
+        <option value="10">10 на странице</option>
+        <option value="20">20 на странице</option>
+        <option value="50">50 на странице</option>
+        <option value="100">100 на странице</option>
+      </select>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/table.js') }}"></script>
+{% endblock %}

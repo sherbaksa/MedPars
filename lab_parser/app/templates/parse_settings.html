@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Настройки парсинга · MedPars{% endblock %}
+{% block content %}
+  <div class="content-card">
+    <h2>Настройки парсинга результатов</h2>
+    
+    <p>Здесь вы можете настроить правила для автоматического парсинга результатов анализов.</p>
+    
+    <div class="controls">
+      <button id="add-rule-btn">Добавить правило</button>
+    </div>
+
+    <div id="rules-list">
+      <table id="rules-table">
+        <thead>
+          <tr>
+            <th>Краткое название</th>
+            <th>Шаблон теста</th>
+            <th>Тип значения</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Модальное окно для добавления/редактирования правила -->
+  <div id="rule-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3 id="modal-title">Добавить правило</h3>
+      
+      <form id="rule-form">
+        <input type="hidden" id="rule-id" value="">
+        
+        <div class="form-group">
+          <label for="test-pattern">Полная строка результата:</label>
+          <textarea id="test-pattern" rows="3" required 
+                    placeholder="Например: IgM к вирусу SARS-CoV-2: отрицательный"></textarea>
+          <small>Введите полную строку из колонки 'Результаты исследования'</small>
+        </div>
+
+        <div class="form-group">
+          <label for="variable-part">Изменяемая часть:</label>
+          <input type="text" id="variable-part" required 
+                 placeholder="Например: отрицательный">
+          <small>Укажите часть строки, которая меняется от анализа к анализу</small>
+        </div>
+
+        <div class="form-group">
+          <label for="value-type">Тип значения:</label>
+          <select id="value-type" required>
+            <option value="">Выберите тип</option>
+            <option value="1">Тип 1: Обнаружено / Не обнаружено</option>
+            <option value="2">Тип 2: Числовое значение</option>
+            <option value="3">Тип 3: Иное значение</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="short-name">Краткое обозначение (для колонки):</label>
+          <input type="text" id="short-name" required maxlength="50"
+                 placeholder="Например: IgM-CoV2">
+          <small>Будет использоваться как заголовок колонки в итоговой таблице</small>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit">Сохранить</button>
+          <button type="button" id="cancel-btn" class="secondary">Отмена</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/parse_settings.js') }}"></script>
+{% endblock %}

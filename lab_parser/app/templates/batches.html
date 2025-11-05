@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Журнал загрузок · MedPars{% endblock %}
+{% block content %}
+  <div class="content-card">
+    <h2>Журнал загрузок</h2>
+
+    {% if files %}
+      <table>
+        <thead>
+          <tr>
+            <th>Имя файла</th>
+            <th>Размер</th>
+            <th>Загружен</th>
+            <th class="no-print">Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in files %}
+            <tr>
+              <td><strong>{{ f.name }}</strong></td>
+              <td>{{ f.size_h }}</td>
+              <td>{{ f.mtime_h }}</td>
+              <td class="no-print">
+                <a href="{{ url_for('ui.batches_download', name=f.name) }}" style="margin-right: 12px;">⬇️ Скачать</a>
+                <a href="{{ url_for('ui.table') }}?batch={{ f.name }}">📊 Открыть таблицу</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div style="text-align: center; padding: 40px 20px; background: var(--bg-gray); border-radius: 8px;">
+        <p style="font-size: 18px; color: var(--text-secondary); margin-bottom: 20px;">
+          📂 Загрузок пока нет
+        </p>
+        <a href="{{ url_for('ui.upload_get') }}" class="btn">📤 Загрузить первый файл</a>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

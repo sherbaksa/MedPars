@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}MedPars{% endblock %}</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+  <header class="no-print">
+    <div class="container">
+      <h1>MedPars</h1>
+      <nav>
+        <a href="{{ url_for('ui.index') }}">Главная</a>
+        <a href="{{ url_for('ui.table') }}">Таблица</a>
+        <a href="{{ url_for('ui.report') }}">Отчёт</a>
+        <a href="{{ url_for('ui.upload_get') }}">Загрузить файл</a>
+        <a href="{{ url_for('ui.batches') }}">Журнал загрузок</a>
+        <a href="{{ url_for('ui.parse_settings') }}">Настройки парсинга</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

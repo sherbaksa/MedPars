@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Главная · MedPars{% endblock %}
+{% block content %}
+  <div class="content-card">
+    <h2>Добро пожаловать в MedPars</h2>
+    <p style="font-size: 16px; color: var(--text-secondary);">
+      Система для обработки и анализа медицинских данных из лабораторных исследований.
+    </p>
+
+    <h3>🚀 Быстрый старт:</h3>
+    <ol style="font-size: 15px;">
+      <li><a href="{{ url_for('ui.upload_get') }}">Загрузите файл</a> с результатами исследований (.xls или .xlsx)</li>
+      <li>Перейдите в <a href="{{ url_for('ui.batches') }}">Журнал загрузок</a> и откройте таблицу</li>
+      <li>Используйте фильтры и поиск для анализа данных</li>
+    </ol>
+
+    <div style="display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap;">
+      <a href="{{ url_for('ui.upload_get') }}" class="btn">📤 Загрузить файл</a>
+      <a href="{{ url_for('ui.batches') }}" class="btn">📋 Журнал загрузок</a>
+      <a href="{{ url_for('ui.table') }}" class="btn">📊 Таблица</a>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,78 @@
+—ÚÛÍÚÛ‡ Ô‡ÔÓÍ ÚÓÏ‡ ÕÓ‚˚È ÚÓÏ
+—ÂËÈÌ˚È ÌÓÏÂ ÚÓÏ‡: BEFF-2E55
+F:.
+¶   .env
+¶   .gitignore
+¶   111.xlsx
+¶   requirements.txt
+¶   tree.txt
+¶   wsgi.py
+¶   ‰ÂÂ‚Ó_Í‡Ú‡ÎÓ„Ó‚.txt
+¶   
++---lab_parser
+¶   +---app
+¶   ¶   ¶   config.py
+¶   ¶   ¶   __init__.py
+¶   ¶   ¶   
+¶   ¶   +---models
+¶   ¶   ¶   ¶   parse_rules.py
+¶   ¶   ¶   ¶   __init__.py
+¶   ¶   ¶   ¶   
+¶   ¶   ¶   L---__pycache__
+¶   ¶   ¶           parse_rules.cpython-313.pyc
+¶   ¶   ¶           __init__.cpython-313.pyc
+¶   ¶   ¶           
+¶   ¶   +---routes
+¶   ¶   ¶   ¶   api.py
+¶   ¶   ¶   ¶   ui.py
+¶   ¶   ¶   ¶   
+¶   ¶   ¶   L---__pycache__
+¶   ¶   ¶           api.cpython-313.pyc
+¶   ¶   ¶           api.cpython-313.pyc.2081382985728
+¶   ¶   ¶           ui.cpython-313.pyc
+¶   ¶   ¶           
+¶   ¶   +---services
+¶   ¶   ¶   ¶   parse_excel.py
+¶   ¶   ¶   ¶   results_parser.py
+¶   ¶   ¶   ¶   
+¶   ¶   ¶   L---__pycache__
+¶   ¶   ¶           parse_excel.cpython-313.pyc
+¶   ¶   ¶           results_parser.cpython-313.pyc
+¶   ¶   ¶           
+¶   ¶   +---static
+¶   ¶   ¶   +---css
+¶   ¶   ¶   ¶       main.css
+¶   ¶   ¶   ¶       
+¶   ¶   ¶   L---js
+¶   ¶   ¶           parse_settings.js
+¶   ¶   ¶           table.js
+¶   ¶   ¶           
+¶   ¶   +---templates
+¶   ¶   ¶       base.html
+¶   ¶   ¶       batches.html
+¶   ¶   ¶       index.html
+¶   ¶   ¶       parse_settings.html
+¶   ¶   ¶       report.html
+¶   ¶   ¶       table.html
+¶   ¶   ¶       upload.html
+¶   ¶   ¶       
+¶   ¶   +---utils
+¶   ¶   ¶   ¶   io_utils.py
+¶   ¶   ¶   ¶   
+¶   ¶   ¶   L---__pycache__
+¶   ¶   ¶           io_utils.cpython-313.pyc
+¶   ¶   ¶           
+¶   ¶   L---__pycache__
+¶   ¶           config.cpython-313.pyc
+¶   ¶           __init__.cpython-313.pyc
+¶   ¶           
+¶   +---instance
+¶   ¶   ¶   .gitkeep
+¶   ¶   ¶   parse_rules.db
+¶   ¶   ¶   
+¶   ¶   L---uploads
+¶   ¶           xls__20251103-192606.xlsx
+¶   ¶           
+¶   L---utils
++---migrations
+L---tests
