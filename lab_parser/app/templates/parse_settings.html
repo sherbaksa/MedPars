@@ -7,17 +7,17 @@
     <p>Здесь вы можете настроить правила для автоматического парсинга результатов анализов.</p>
     
     <div class="controls">
-      <button id="add-rule-btn">Добавить правило</button>
+      <button id="add-definition-btn">Добавить анализ</button>
     </div>
 
-    <div id="rules-list">
-      <table id="rules-table">
+    <div id="definitions-list">
+      <table id="definitions-table">
         <thead>
           <tr>
-            <th>Краткое название</th>
-            <th>Шаблон теста</th>
-            <th>Тип значения</th>
-            <th>Действия</th>
+            <th style="width: 200px;">Краткое описание</th>
+            <th>Полный пример результата</th>
+            <th style="width: 120px;">Показателей</th>
+            <th style="width: 150px;">Действия</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -25,52 +25,107 @@
     </div>
   </div>
 
-  <!-- Модальное окно для добавления/редактирования правила -->
-  <div id="rule-modal" class="modal" style="display: none;">
-    <div class="modal-content">
-      <h3 id="modal-title">Добавить правило</h3>
-      
-      <form id="rule-form">
-        <input type="hidden" id="rule-id" value="">
-        
+  <!-- Модальное окно для добавления/редактирования анализа -->
+  <div id="definition-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+      <h3 id="modal-title">Добавить анализ</h3>
+
+      <form id="definition-form">
+        <input type="hidden" id="definition-id" value="">
+
         <div class="form-group">
-          <label for="test-pattern">Полная строка результата:</label>
-          <textarea id="test-pattern" rows="3" required 
-                    placeholder="Например: IgM к вирусу SARS-CoV-2: отрицательный"></textarea>
-          <small>Введите полную строку из колонки 'Результаты исследования'</small>
+          <label for="full-example-text">Полная строка с примером результата:</label>
+          <textarea id="full-example-text" rows="4" required
+                    placeholder="Например: Определение суммарных антител (IgM/IgG) к бледной трепонеме (Treponema pallidum) иммуноферментным методом (ИФА) в крови: Антитела к Treponema pallidum - 4.100; Антитела к Treponema pallidum - Обнаружено"></textarea>
+          <small>Введите полную строку из колонки 'Результаты исследования' с примером всех показателей</small>
         </div>
 
         <div class="form-group">
-          <label for="variable-part">Изменяемая часть:</label>
-          <input type="text" id="variable-part" required 
-                 placeholder="Например: отрицательный">
-          <small>Укажите часть строки, которая меняется от анализа к анализу</small>
+          <label for="short-description">Краткое описание:</label>
+          <input type="text" id="short-description" required maxlength="100"
+                 placeholder="Например: Антитела к Treponema pallidum">
+          <small>Используется для отображения в таблице результатов</small>
         </div>
 
-        <div class="form-group">
-          <label for="value-type">Тип значения:</label>
-          <select id="value-type" required>
-            <option value="">Выберите тип</option>
-            <option value="1">Тип 1: Обнаружено / Не обнаружено</option>
-            <option value="2">Тип 2: Числовое значение</option>
-            <option value="3">Тип 3: Иное значение</option>
-          </select>
+        <hr style="margin: 20px 0;">
+
+        <h4>Показатели анализа</h4>
+        <p style="margin-bottom: 15px; color: #666;">Добавьте один или несколько показателей для этого анализа. Если анализ содержит несколько показателей, они обычно разделяются точкой с запятой (;)</p>
+
+        <div id="indicators-container">
+          <!-- Показатели будут добавляться динамически -->
         </div>
 
-        <div class="form-group">
-          <label for="short-name">Краткое обозначение (для колонки):</label>
-          <input type="text" id="short-name" required maxlength="50"
-                 placeholder="Например: IgM-CoV2">
-          <small>Будет использоваться как заголовок колонки в итоговой таблице</small>
-        </div>
+        <button type="button" id="add-indicator-btn" class="secondary" style="margin-bottom: 20px;">
+          + Добавить показатель
+        </button>
 
         <div class="form-actions">
-          <button type="submit">Сохранить</button>
+          <button type="submit">Сохранить анализ</button>
           <button type="button" id="cancel-btn" class="secondary">Отмена</button>
         </div>
       </form>
     </div>
   </div>
+
+  <style>
+    .indicator-block {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+      background-color: #f9f9f9;
+      position: relative;
+    }
+
+    .indicator-block h5 {
+      margin: 0 0 15px 0;
+      color: #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .indicator-block .remove-indicator-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .indicator-block .remove-indicator-btn:hover {
+      background-color: #c82333;
+    }
+
+    .indicator-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+
+    .indicator-checkboxes {
+      display: flex;
+      gap: 20px;
+      margin-top: 10px;
+    }
+
+    .indicator-checkboxes label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: normal;
+      cursor: pointer;
+    }
+
+    .indicator-checkboxes input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+  </style>
 
   <script src="{{ url_for('static', filename='js/parse_settings.js') }}"></script>
 {% endblock %}

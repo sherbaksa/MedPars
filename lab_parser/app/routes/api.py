@@ -7,79 +7,6 @@ from ..services.parse_excel import read_basic_records, read_records_with_parsing
 
 api_bp = Blueprint("api", __name__, url_prefix="/api")
 
-# ===== Моки данных =====
-# Формат максимально близкий к будущему реальному
-_MOCK_DATA = [
-    {
-        "id": 1,
-        "row_id": 1,
-        "patient": {
-            "last_name": "Иванов",
-            "first_name": "Иван",
-            "middle_name": "Иванович",
-            "gender": "Муж.",
-            "birth_date": "1972-02-08",
-            "age_years": 53
-        },
-        "sample_id": "1706250224",
-        "department": "Поликлиника Покровка",
-        "results": {
-            "summary": "IgM/IgG SARS-CoV-2: отриц.",
-            "tests": [
-                {"name": "IgM SARS-CoV-2", "value": "отриц.", "units": None, "flag": "N"},
-                {"name": "IgG SARS-CoV-2", "value": "отриц.", "units": None, "flag": "N"},
-            ],
-            "raw_text": "Определение антител классов M, G (IgM, IgG) к SARS-CoV-2",
-            "parse_quality": "mock"
-        }
-    },
-    {
-        "id": 2,
-        "row_id": 2,
-        "patient": {
-            "last_name": "Сидоров",
-            "first_name": "Сидор",
-            "middle_name": "Сидорович",
-            "gender": "Муж.",
-            "birth_date": "1973-09-16",
-            "age_years": 52
-        },
-        "sample_id": "3007250122",
-        "department": "Поликлиника Покровка",
-        "results": {
-            "summary": "HCV Ab: полож.",
-            "tests": [
-                {"name": "HCV Ab", "value": "полож.", "units": None, "flag": "A"}
-            ],
-            "raw_text": "Определение антител к вирусу гепатита C",
-            "parse_quality": "mock"
-        }
-    },
-]
-
-
-def _apply_filters(items, q=None, gender=None, department=None):
-    def match(item):
-        ok = True
-        if q:
-            ql = q.lower()
-            ok = ok and (
-                    ql in item["patient"]["last_name"].lower()
-                    or ql in item["patient"]["first_name"].lower()
-                    or ql in (item["patient"]["middle_name"] or "").lower()
-                    or ql in item["sample_id"].lower()
-                    or ql in item["department"].lower()
-                    or ql in (item["results"]["summary"] or "").lower()
-            )
-        if gender:
-            ok = ok and (item["patient"]["gender"] == gender)
-        if department:
-            ok = ok and (item["department"] == department)
-        return ok
-
-    return [x for x in items if match(x)]
-
-
 
 @api_bp.get("/record/<int:rid>")
 def record_by_id(rid: int):
@@ -122,88 +49,163 @@ def record_by_id(rid: int):
     return jsonify({"error": "no files uploaded"}), 404
 
 
-# ===== API для правил парсинга =====
+# ===== API для определений анализов =====
 
-@api_bp.get("/parse-rules")
-def get_parse_rules():
-    """Получить все правила парсинга"""
+@api_bp.get("/test-definitions")
+def get_test_definitions():
+    """Получить все определения анализов с их показателями"""
     db = get_parse_rules_db(current_app.instance_path)
-    rules = db.get_all_rules()
-    return jsonify({"rules": rules})
+    definitions = db.get_all_test_definitions()
+
+    # Для каждого определения получаем показатели
+    for definition in definitions:
+        definition['indicators'] = db.get_indicators_for_test(definition['id'])
+
+    return jsonify({"definitions": definitions})
 
 
-@api_bp.post("/parse-rules")
-def create_parse_rule():
-    """Создать новое правило парсинга"""
+@api_bp.post("/test-definitions")
+def create_test_definition():
+    """Создать новое определение анализа с показателями"""
     data = request.get_json()
 
-    # Валидация
     if not data:
         return jsonify({"error": "no data provided"}), 400
 
-    test_pattern = data.get("test_pattern", "").strip()
-    variable_part = data.get("variable_part", "").strip()
-    value_type = data.get("value_type")
-    short_name = data.get("short_name", "").strip()
+    full_example_text = data.get("full_example_text", "").strip()
+    short_description = data.get("short_description", "").strip()
+    indicators = data.get("indicators", [])
 
-    if not test_pattern:
-        return jsonify({"error": "test_pattern is required"}), 400
-    if not variable_part:
-        return jsonify({"error": "variable_part is required"}), 400
-    if value_type not in [1, 2, 3]:
-        return jsonify({"error": "value_type must be 1, 2, or 3"}), 400
-    if not short_name:
-        return jsonify({"error": "short_name is required"}), 400
+    if not full_example_text:
+        return jsonify({"error": "full_example_text is required"}), 400
+    if not short_description:
+        return jsonify({"error": "short_description is required"}), 400
+    if not indicators or len(indicators) == 0:
+        return jsonify({"error": "at least one indicator is required"}), 400
 
-    # Проверка, что variable_part содержится в test_pattern
-    if variable_part not in test_pattern:
-        return jsonify({"error": "variable_part must be part of test_pattern"}), 400
+    # Валидация показателей
+    for idx, indicator in enumerate(indicators):
+        if not indicator.get("indicator_pattern"):
+            return jsonify({"error": f"indicator {idx + 1}: indicator_pattern is required"}), 400
+        if not indicator.get("variable_part"):
+            return jsonify({"error": f"indicator {idx + 1}: variable_part is required"}), 400
+        if indicator.get("value_type") not in [1, 2, 3]:
+            return jsonify({"error": f"indicator {idx + 1}: value_type must be 1, 2, or 3"}), 400
+        if indicator["variable_part"] not in indicator["indicator_pattern"]:
+            return jsonify({"error": f"indicator {idx + 1}: variable_part must be part of indicator_pattern"}), 400
 
     db = get_parse_rules_db(current_app.instance_path)
+
     try:
-        rule_id = db.add_rule(test_pattern, variable_part, value_type, short_name)
-        return jsonify({"success": True, "id": rule_id}), 201
+        # Создаем определение анализа
+        definition_id = db.add_test_definition(full_example_text, short_description)
+
+        # Добавляем показатели
+        for idx, indicator in enumerate(indicators):
+            db.add_test_indicator(
+                test_definition_id=definition_id,
+                indicator_pattern=indicator["indicator_pattern"],
+                variable_part=indicator["variable_part"],
+                value_type=indicator["value_type"],
+                is_key_indicator=indicator.get("is_key_indicator", False),
+                is_required=indicator.get("is_required", True),
+                display_order=indicator.get("display_order", idx)
+            )
+
+        return jsonify({"success": True, "id": definition_id}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-@api_bp.put("/parse-rules/<int:rule_id>")
-def update_parse_rule(rule_id: int):
-    """Обновить правило парсинга"""
+@api_bp.get("/test-definitions/<int:definition_id>")
+def get_test_definition(definition_id: int):
+    """Получить определение анализа с показателями по ID"""
+    db = get_parse_rules_db(current_app.instance_path)
+    definition = db.get_test_definition(definition_id)
+
+    if not definition:
+        return jsonify({"error": "definition not found"}), 404
+
+    # Получаем показатели
+    definition['indicators'] = db.get_indicators_for_test(definition_id)
+
+    return jsonify(definition)
+
+
+@api_bp.put("/test-definitions/<int:definition_id>")
+def update_test_definition(definition_id: int):
+    """Обновить определение анализа с показателями"""
     data = request.get_json()
 
     if not data:
         return jsonify({"error": "no data provided"}), 400
 
-    test_pattern = data.get("test_pattern", "").strip()
-    variable_part = data.get("variable_part", "").strip()
-    value_type = data.get("value_type")
-    short_name = data.get("short_name", "").strip()
+    full_example_text = data.get("full_example_text", "").strip()
+    short_description = data.get("short_description", "").strip()
+    indicators = data.get("indicators", [])
 
-    if not test_pattern or not variable_part or not short_name:
+    if not full_example_text or not short_description:
         return jsonify({"error": "all fields are required"}), 400
-    if value_type not in [1, 2, 3]:
-        return jsonify({"error": "value_type must be 1, 2, or 3"}), 400
-    if variable_part not in test_pattern:
-        return jsonify({"error": "variable_part must be part of test_pattern"}), 400
+    if not indicators or len(indicators) == 0:
+        return jsonify({"error": "at least one indicator is required"}), 400
+
+    # Валидация показателей
+    for idx, indicator in enumerate(indicators):
+        if not indicator.get("indicator_pattern"):
+            return jsonify({"error": f"indicator {idx + 1}: indicator_pattern is required"}), 400
+        if not indicator.get("variable_part"):
+            return jsonify({"error": f"indicator {idx + 1}: variable_part is required"}), 400
+        if indicator.get("value_type") not in [1, 2, 3]:
+            return jsonify({"error": f"indicator {idx + 1}: value_type must be 1, 2, or 3"}), 400
+        if indicator["variable_part"] not in indicator["indicator_pattern"]:
+            return jsonify({"error": f"indicator {idx + 1}: variable_part must be part of indicator_pattern"}), 400
 
     db = get_parse_rules_db(current_app.instance_path)
-    success = db.update_rule(rule_id, test_pattern, variable_part, value_type, short_name)
+
+    # Проверяем существование определения
+    if not db.get_test_definition(definition_id):
+        return jsonify({"error": "definition not found"}), 404
+
+    try:
+        # Обновляем определение
+        db.update_test_definition(definition_id, full_example_text, short_description)
+
+        # Удаляем старые показатели
+        old_indicators = db.get_indicators_for_test(definition_id)
+        for old_indicator in old_indicators:
+            db.delete_test_indicator(old_indicator['id'])
+
+        # Добавляем новые показатели
+        for idx, indicator in enumerate(indicators):
+            db.add_test_indicator(
+                test_definition_id=definition_id,
+                indicator_pattern=indicator["indicator_pattern"],
+                variable_part=indicator["variable_part"],
+                value_type=indicator["value_type"],
+                is_key_indicator=indicator.get("is_key_indicator", False),
+                is_required=indicator.get("is_required", True),
+                display_order=indicator.get("display_order", idx)
+            )
+
+        return jsonify({"success": True})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@api_bp.delete("/test-definitions/<int:definition_id>")
+def delete_test_definition(definition_id: int):
+    """Удалить определение анализа (каскадно удалятся все показатели)"""
+    db = get_parse_rules_db(current_app.instance_path)
+    success = db.delete_test_definition(definition_id)
 
     if not success:
-        return jsonify({"error": "rule not found"}), 404
+        return jsonify({"error": "definition not found"}), 404
 
     return jsonify({"success": True})
 
 
-@api_bp.get("/parse-rules/<int:rule_id>")
-def get_parse_rule(rule_id: int):
-    """Получить правило по ID"""
-    db = get_parse_rules_db(current_app.instance_path)
-    rule = db.get_rule(rule_id)
-    if not rule:
-        return jsonify({"error": "rule not found"}), 404
-    return jsonify(rule)
+# ===== API для работы с записями (таблица результатов) =====
+
 @api_bp.get("/records")
 def records():
     """
@@ -249,7 +251,7 @@ def records():
         return jsonify({"error": "batch not found", "batch": batch}), 404
 
     try:
-        # Загружаем правила парсинга
+        # Загружаем правила парсинга (в старом формате для совместимости с парсером)
         rules_db = get_parse_rules_db(current_app.instance_path)
         rules = rules_db.get_all_rules()
 
@@ -318,14 +320,3 @@ def records():
         "rules_map": rules_map,
         "batch": batch
     })
-
-@api_bp.delete("/parse-rules/<int:rule_id>")
-def delete_parse_rule(rule_id: int):
-    """Удалить правило парсинга"""
-    db = get_parse_rules_db(current_app.instance_path)
-    success = db.delete_rule(rule_id)
-
-    if not success:
-        return jsonify({"error": "rule not found"}), 404
-
-    return jsonify({"success": True})

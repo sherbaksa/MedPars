@@ -1,17 +1,18 @@
 """
 Парсер результатов анализов на основе пользовательских правил
+Поддерживает анализы с множественными показателями
 """
 import re
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 
 class ResultsParser:
-    """Парсер результатов на основе правил из БД"""
+    """Парсер результатов на основе правил из БД с поддержкой множественных показателей"""
 
     def __init__(self, rules: List[Dict[str, Any]]):
         """
         Args:
-            rules: Список правил парсинга из БД
+            rules: Список правил парсинга из БД (в старом формате для совместимости)
         """
         self.rules = rules
         self._prepare_patterns()
@@ -30,13 +31,12 @@ class ResultsParser:
             # Экранируем переменную часть
             escaped_variable = re.escape(variable_part)
 
-            # Заменяем переменную часть на паттерн который захватит ВСЁ до начала НОВОГО анализа
-            # Используем lookahead чтобы остановиться перед:
-            # 1. Началом нового предложения (Определение/Исследование/Антитела и т.д.)
-            # 2. Или концом строки
+            # Заменяем переменную часть на паттерн который захватит значение
+            # Учитываем, что показатель может заканчиваться на ";" (если не последний)
+            # или на начало следующего предложения
             search_pattern = escaped_pattern.replace(
                 escaped_variable,
-                r'(.+?)(?=\s+(?:Определение|Исследование|Антитела|Выявление|Анализ)|$)'
+                r'(.+?)(?=;|\s+(?:Определение|Исследование|Антитела|Выявление|Анализ)|$)'
             )
 
             try:
@@ -72,42 +72,57 @@ class ResultsParser:
         tests = []
         matched_rules = []
 
-        # Пробуем применить каждое правило
+        # Группируем правила по test_definition_id (для анализов с несколькими показателями)
+        rules_by_definition = {}
         for compiled_rule in self.compiled_rules:
             rule = compiled_rule['rule']
-            pattern = compiled_rule['pattern']
-            value_type = compiled_rule['value_type']
+            def_id = rule.get('test_definition_id', rule['id'])  # Fallback на id для старых данных
 
-            match = pattern.search(raw_text)
-            if match:
-                # Получили захваченное значение (сырое)
-                captured_value = match.group(1).strip()
+            if def_id not in rules_by_definition:
+                rules_by_definition[def_id] = []
+            rules_by_definition[def_id].append(compiled_rule)
 
-                # ВРЕМЕННАЯ ОТЛАДКА
-                #print(f"DEBUG: Правило '{rule['short_name']}'")
-                #print(f"  Захвачено: '{captured_value}'")
+        # Обрабатываем каждый анализ (группу показателей)
+        for def_id, indicators in rules_by_definition.items():
+            # Для каждого показателя в этом анализе
+            for compiled_rule in indicators:
+                rule = compiled_rule['rule']
+                pattern = compiled_rule['pattern']
+                value_type = compiled_rule['value_type']
 
-                # Извлекаем конечное значение в зависимости от типа
-                extracted_value = self._extract_value_by_type(captured_value, value_type)
+                match = pattern.search(raw_text)
+                if match:
+                    # Получили захваченное значение (сырое)
+                    captured_value = match.group(1).strip()
 
-                #print(f"  Извлечено: '{extracted_value}'")
-                #print(f"  Тип: {value_type}")
+                    # Извлекаем конечное значение в зависимости от типа
+                    extracted_value = self._extract_value_by_type(captured_value, value_type)
 
-                if extracted_value:
-                    # Нормализация значения в зависимости от типа
-                    normalized_value = self._normalize_value(extracted_value, value_type)
+                    if extracted_value:
+                        # Нормализация значения в зависимости от типа
+                        normalized_value = self._normalize_value(extracted_value, value_type)
 
-                    #print(f"  Нормализовано: '{normalized_value}'")
+                        # Формируем название показателя
+                        # Если у анализа несколько показателей, добавляем номер
+                        indicator_name = rule['short_name']
+                        if len(indicators) > 1:
+                            # TODO: В будущем можно добавить более осмысленные суффиксы
+                            # например, на основе display_order или is_key_indicator
+                            indicator_index = indicators.index(compiled_rule) + 1
+                            indicator_name = f"{rule['short_name']}-{indicator_index}"
 
-                    tests.append({
-                        "name": rule['short_name'],
-                        "value": normalized_value,
-                        "raw_value": extracted_value,
-                        "value_type": value_type,
-                        "rule_id": rule['id']
-                    })
+                        tests.append({
+                            "name": indicator_name,
+                            "value": normalized_value,
+                            "raw_value": extracted_value,
+                            "value_type": value_type,
+                            "rule_id": rule['id'],
+                            "test_definition_id": def_id,
+                            "is_key_indicator": rule.get('is_key_indicator', True),
+                            "is_required": rule.get('is_required', True)
+                        })
 
-                    matched_rules.append(rule['id'])
+                        matched_rules.append(rule['id'])
 
         # Формируем краткую сводку
         summary = self._build_summary(tests, raw_text)
@@ -145,6 +160,14 @@ class ResultsParser:
         cutoff = re.search(r'\s+[А-ЯЁ][а-яё]', captured_text)
         if cutoff:
             captured_text = captured_text[:cutoff.start()].strip()
+
+        # TODO: БУДУЩЕЕ УЛУЧШЕНИЕ
+        # Здесь можно добавить автоматическое определение типа значения
+        # на основе содержимого captured_text:
+        # - Если найдено число с точкой/запятой -> тип 2
+        # - Если найдено "обнаружено/не обнаружено" -> тип 1
+        # - Иначе -> тип 3
+        # Это позволит парсеру самостоятельно различать показатели в одном анализе
 
         if value_type == 1:
             # Тип 1: Обнаружено/Не обнаружено - ищем в конце строки
@@ -218,10 +241,12 @@ class ResultsParser:
                 return raw_text[:137] + "..."
             return raw_text
 
-        # Формируем сводку из названий и значений
+        # Формируем сводку из названий и значений (только ключевые показатели)
         parts = []
         for test in tests:
-            parts.append(f"{test['name']}: {test['value']}")
+            # В сводку добавляем только ключевые показатели
+            if test.get('is_key_indicator', True):
+                parts.append(f"{test['name']}: {test['value']}")
 
         summary = "; ".join(parts)
 

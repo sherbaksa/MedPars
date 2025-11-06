@@ -5,8 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f87d9f15-af29-4635-a1f5-42f0eb3e439b" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/clear_db.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lab_parser/app/models/parse_rules.py" beforeDir="false" afterPath="$PROJECT_DIR$/lab_parser/app/models/parse_rules.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lab_parser/app/routes/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/lab_parser/app/routes/api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lab_parser/app/services/results_parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/lab_parser/app/services/results_parser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lab_parser/app/static/js/parse_settings.js" beforeDir="false" afterPath="$PROJECT_DIR$/lab_parser/app/static/js/parse_settings.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lab_parser/app/templates/parse_settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/lab_parser/app/templates/parse_settings.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tree.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tree.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,7 +68,29 @@
     "git-widget-placeholder": "main"
   }
 }]]></component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Python.clear_db">
+    <configuration name="clear_db" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="MedParser" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/clear_db.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="wsgi" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="MedParser" />
       <option name="ENV_FILES" value="" />
@@ -87,6 +115,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.clear_db" />
         <item itemvalue="Python.wsgi" />
       </list>
     </recent_temporary>
