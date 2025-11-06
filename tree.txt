@@ -1,78 +1,82 @@
-Структура папок тома Новый том
-Серийный номер тома: BEFF-2E55
-F:.
-¦   .env
-¦   .gitignore
-¦   111.xlsx
-¦   requirements.txt
-¦   tree.txt
-¦   wsgi.py
-¦   дерево_каталогов.txt
-¦   
-+---lab_parser
-¦   +---app
-¦   ¦   ¦   config.py
-¦   ¦   ¦   __init__.py
-¦   ¦   ¦   
-¦   ¦   +---models
-¦   ¦   ¦   ¦   parse_rules.py
-¦   ¦   ¦   ¦   __init__.py
-¦   ¦   ¦   ¦   
-¦   ¦   ¦   L---__pycache__
-¦   ¦   ¦           parse_rules.cpython-313.pyc
-¦   ¦   ¦           __init__.cpython-313.pyc
-¦   ¦   ¦           
-¦   ¦   +---routes
-¦   ¦   ¦   ¦   api.py
-¦   ¦   ¦   ¦   ui.py
-¦   ¦   ¦   ¦   
-¦   ¦   ¦   L---__pycache__
-¦   ¦   ¦           api.cpython-313.pyc
-¦   ¦   ¦           api.cpython-313.pyc.2081382985728
-¦   ¦   ¦           ui.cpython-313.pyc
-¦   ¦   ¦           
-¦   ¦   +---services
-¦   ¦   ¦   ¦   parse_excel.py
-¦   ¦   ¦   ¦   results_parser.py
-¦   ¦   ¦   ¦   
-¦   ¦   ¦   L---__pycache__
-¦   ¦   ¦           parse_excel.cpython-313.pyc
-¦   ¦   ¦           results_parser.cpython-313.pyc
-¦   ¦   ¦           
-¦   ¦   +---static
-¦   ¦   ¦   +---css
-¦   ¦   ¦   ¦       main.css
-¦   ¦   ¦   ¦       
-¦   ¦   ¦   L---js
-¦   ¦   ¦           parse_settings.js
-¦   ¦   ¦           table.js
-¦   ¦   ¦           
-¦   ¦   +---templates
-¦   ¦   ¦       base.html
-¦   ¦   ¦       batches.html
-¦   ¦   ¦       index.html
-¦   ¦   ¦       parse_settings.html
-¦   ¦   ¦       report.html
-¦   ¦   ¦       table.html
-¦   ¦   ¦       upload.html
-¦   ¦   ¦       
-¦   ¦   +---utils
-¦   ¦   ¦   ¦   io_utils.py
-¦   ¦   ¦   ¦   
-¦   ¦   ¦   L---__pycache__
-¦   ¦   ¦           io_utils.cpython-313.pyc
-¦   ¦   ¦           
-¦   ¦   L---__pycache__
-¦   ¦           config.cpython-313.pyc
-¦   ¦           __init__.cpython-313.pyc
-¦   ¦           
-¦   +---instance
-¦   ¦   ¦   .gitkeep
-¦   ¦   ¦   parse_rules.db
-¦   ¦   ¦   
-¦   ¦   L---uploads
-¦   ¦           xls__20251103-192606.xlsx
-¦   ¦           
-¦   L---utils
-+---migrations
-L---tests
+РЎС‚СЂСѓРєС‚СѓСЂР° РїР°РїРѕРє
+РЎРµСЂРёР№РЅС‹Р№ РЅРѕРјРµСЂ С‚РѕРјР°: 5A79-F243
+I:.
+в”‚   .gitignore
+в”‚   requirements.txt
+в”‚   tree.txt
+в”‚   wsgi.py
+в”‚   РґРµСЂРµРІРѕ_РєР°С‚Р°Р»РѕРіРѕРІ.txt
+в”‚   Р–СѓСЂРЅР°Р» РІС‹РїРѕР»РЅРµРЅРЅС‹С… РёСЃСЃР»РµРґРѕРІР°РЅРёР№.xls
+в”‚   
+в”њв”Ђв”Ђв”Ђ.idea
+в”‚   в”‚   MedParser.iml
+в”‚   в”‚   modules.xml
+в”‚   в”‚   vcs.xml
+в”‚   в”‚   workspace.xml
+в”‚   в”‚   
+в”‚   в””в”Ђв”Ђв”ЂinspectionProfiles
+в”‚           profiles_settings.xml
+в”‚           
+в””в”Ђв”Ђв”Ђlab_parser
+    в”њв”Ђв”Ђв”Ђapp
+    в”‚   в”‚   config.py
+    в”‚   в”‚   __init__.py
+    в”‚   в”‚   
+    в”‚   в”њв”Ђв”Ђв”Ђmodels
+    в”‚   в”‚   в”‚   parse_rules.py
+    в”‚   в”‚   в”‚   __init__.py
+    в”‚   в”‚   в”‚   
+    в”‚   в”‚   в””в”Ђв”Ђв”Ђ__pycache__
+    в”‚   в”‚           parse_rules.cpython-311.pyc
+    в”‚   в”‚           __init__.cpython-311.pyc
+    в”‚   в”‚           
+    в”‚   в”њв”Ђв”Ђв”Ђroutes
+    в”‚   в”‚   в”‚   api.py
+    в”‚   в”‚   в”‚   ui.py
+    в”‚   в”‚   в”‚   
+    в”‚   в”‚   в””в”Ђв”Ђв”Ђ__pycache__
+    в”‚   в”‚           api.cpython-311.pyc
+    в”‚   в”‚           ui.cpython-311.pyc
+    в”‚   в”‚           
+    в”‚   в”њв”Ђв”Ђв”Ђservices
+    в”‚   в”‚   в”‚   parse_excel.py
+    в”‚   в”‚   в”‚   results_parser.py
+    в”‚   в”‚   в”‚   
+    в”‚   в”‚   в””в”Ђв”Ђв”Ђ__pycache__
+    в”‚   в”‚           parse_excel.cpython-311.pyc
+    в”‚   в”‚           results_parser.cpython-311.pyc
+    в”‚   в”‚           
+    в”‚   в”њв”Ђв”Ђв”Ђstatic
+    в”‚   в”‚   в”њв”Ђв”Ђв”Ђcss
+    в”‚   в”‚   в”‚       main.css
+    в”‚   в”‚   в”‚       
+    в”‚   в”‚   в””в”Ђв”Ђв”Ђjs
+    в”‚   в”‚           parse_settings.js
+    в”‚   в”‚           table.js
+    в”‚   в”‚           
+    в”‚   в”њв”Ђв”Ђв”Ђtemplates
+    в”‚   в”‚       base.html
+    в”‚   в”‚       batches.html
+    в”‚   в”‚       index.html
+    в”‚   в”‚       parse_settings.html
+    в”‚   в”‚       report.html
+    в”‚   в”‚       table.html
+    в”‚   в”‚       upload.html
+    в”‚   в”‚       
+    в”‚   в”њв”Ђв”Ђв”Ђutils
+    в”‚   в”‚   в”‚   io_utils.py
+    в”‚   в”‚   в”‚   
+    в”‚   в”‚   в””в”Ђв”Ђв”Ђ__pycache__
+    в”‚   в”‚           io_utils.cpython-311.pyc
+    в”‚   в”‚           
+    в”‚   в””в”Ђв”Ђв”Ђ__pycache__
+    в”‚           config.cpython-311.pyc
+    в”‚           __init__.cpython-311.pyc
+    в”‚           
+    в””в”Ђв”Ђв”Ђinstance
+        в”‚   .gitkeep
+        в”‚   parse_rules.db
+        в”‚   
+        в””в”Ђв”Ђв”Ђuploads
+                Р–СѓСЂРЅР°Р»_РІС‹РїРѕР»РЅРµРЅРЅС‹С…_РёСЃСЃР»РµРґРѕРІР°РЅРёР№__20251106-095530.xlsx
+                
