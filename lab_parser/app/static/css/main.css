@@ -610,3 +610,100 @@ code {
     width: 100%;
   }
 }
+/* ========== Indicator Blocks (для настроек парсинга) ========== */
+.indicator-block {
+  border: 2px solid var(--border-color);
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ffffff 0%, #f9fbfd 100%);
+  position: relative;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.indicator-block:hover {
+  border-color: var(--primary-blue);
+  box-shadow: var(--shadow-md);
+}
+
+.indicator-block h5 {
+  margin: 0 0 20px 0;
+  color: var(--primary-blue-dark);
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--primary-blue-light);
+}
+
+.indicator-block .remove-indicator-btn {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.indicator-block .remove-indicator-btn:hover {
+  background-color: #c0392b;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.indicator-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.indicator-checkboxes {
+  display: flex;
+  gap: 24px;
+  margin-top: 15px;
+  padding: 12px;
+  background: var(--primary-blue-light);
+  border-radius: 8px;
+}
+
+.indicator-checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: color 0.2s ease;
+}
+
+.indicator-checkboxes label:hover {
+  color: var(--primary-blue);
+}
+
+.indicator-checkboxes input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--primary-blue);
+}
+
+/* Responsive для блоков показателей */
+@media (max-width: 768px) {
+  .indicator-row {
+    grid-template-columns: 1fr;
+  }
+
+  .indicator-checkboxes {
+    flex-direction: column;
+    gap: 12px;
+  }
+}

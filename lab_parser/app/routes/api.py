@@ -261,14 +261,21 @@ def records():
         return jsonify({"error": f"failed to read excel: {e}"}), 500
 
     # Собираем уникальные колонки тестов из всех записей
-    test_columns_set = set()
+    # Теперь группируем по анализам (test_definition), а не по отдельным показателям
+    test_definitions_set = set()
+    test_def_names = {}  # mapping: test_definition_id -> short_name
+
     for item in data:
         tests = item.get("results", {}).get("tests", [])
         for test in tests:
-            test_columns_set.add(test["name"])
+            test_def_id = test.get("test_definition_id", test.get("rule_id"))
+            # Убираем суффикс -1, -2 из имени чтобы получить базовое имя анализа
+            base_name = test["name"].split('-')[0] if '-' in test["name"] else test["name"]
+            test_definitions_set.add(test_def_id)
+            test_def_names[test_def_id] = base_name
 
-    # Сортируем колонки для стабильного порядка
-    test_columns = sorted(list(test_columns_set))
+    # Сортируем колонки для стабильного порядка (по именам анализов)
+    test_columns = sorted([test_def_names[def_id] for def_id in test_definitions_set])
 
     # Создаем маппинг rule_id -> test_pattern для фильтрации на клиенте
     rules_map = {}

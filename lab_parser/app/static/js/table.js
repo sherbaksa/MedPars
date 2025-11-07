@@ -9,7 +9,7 @@ const state = {
   q: "",
   gender: "",
   department: "",
-  batch: initialBatch  // Если пустой - API вернет последний файл
+  batch: initialBatch
 };
 
 function getParams() {
@@ -73,10 +73,12 @@ async function loadData() {
   const batchInfo = state.batch ? ` (файл: ${state.batch})` : '';
   meta.textContent = `Найдено: ${data.total}. Страница ${data.page}.${batchInfo}`;
 
-  // Обновляем заголовки таблицы с динамическими колонками тестов
-  const headerRow = document.getElementById("table-header");
+  // Получаем test_columns (это теперь анализы, не отдельные показатели)
   const testColumns = data.test_columns || [];
   const rulesMap = data.rules_map || {};
+
+  // Обновляем заголовки таблицы с динамическими колонками анализов
+  const headerRow = document.getElementById("table-header");
 
   // Очищаем старые динамические колонки (если были)
   const existingDynamicCols = headerRow.querySelectorAll('.dynamic-test-col');
@@ -137,44 +139,77 @@ async function loadData() {
     const rawText = item.results?.raw_text ?? "";
     const tests = item.results?.tests || [];
 
-    // Создаем объект для быстрого поиска значений тестов
-    const testValues = {};
+    // Группируем показатели по test_definition_id (анализам)
+    const testsByDefinition = {};
     tests.forEach(test => {
-      testValues[test.name] = test.value;
+      const defId = test.test_definition_id || test.rule_id; // fallback на rule_id
+      if (!testsByDefinition[defId]) {
+        testsByDefinition[defId] = [];
+      }
+      testsByDefinition[defId].push(test);
     });
+
+    // Создаем маппинг: название анализа -> значения показателей
+    const testValues = {};
+    testColumns.forEach(testName => {
+      testValues[testName] = [];
+    });
+
+    // Заполняем значения
+    for (const defId in testsByDefinition) {
+      const indicators = testsByDefinition[defId];
+      // Берем short_name из первого показателя (они все относятся к одному анализу)
+      const testName = indicators[0].name.split('-')[0]; // Убираем суффикс -1, -2
+
+      // Собираем значения всех показателей этого анализа
+      const values = indicators.map(ind => ind.value).filter(Boolean);
+
+      if (testValues[testName] !== undefined) {
+        testValues[testName] = values;
+      }
+    }
 
     // Удаляем распарсенные части из сырого текста
     let filteredText = rawText;
 
+    // Группируем показатели по анализам для удаления
+    const parsedDefinitions = {};
     tests.forEach(test => {
-      const ruleId = test.rule_id;
-      const rule = rulesMap[ruleId];
-
-      if (rule && rule.test_pattern) {
-        // Создаем точный паттерн для удаления
-        // Заменяем переменную часть шаблона на фактическое значение
-        const exactPattern = rule.test_pattern.replace(rule.variable_part, test.raw_value);
-
-        // ВРЕМЕННОЕ ЛОГИРОВАНИЕ ДЛЯ ОТЛАДКИ
-        console.log('Исходный текст:', rawText);
-        console.log('Шаблон правила:', rule.test_pattern);
-        console.log('Переменная часть:', rule.variable_part);
-        console.log('Фактическое значение:', test.raw_value);
-        console.log('Точный паттерн для удаления:', exactPattern);
-        console.log('Найдено в тексте:', filteredText.includes(exactPattern));
-
-        filteredText = filteredText.replace(exactPattern, '');
-        console.log('После удаления:', filteredText);
-        console.log('---');
+      const defId = test.test_definition_id || test.rule_id;
+      if (!parsedDefinitions[defId]) {
+        parsedDefinitions[defId] = [];
       }
+      parsedDefinitions[defId].push(test);
     });
+
+    // Для каждого анализа удаляем все найденные показатели
+    for (const defId in parsedDefinitions) {
+      const indicators = parsedDefinitions[defId];
+
+      // Удаляем каждый показатель
+      indicators.forEach(test => {
+        const ruleId = test.rule_id;
+        const rule = rulesMap[ruleId];
+        if (rule && rule.test_pattern) {
+          const exactPattern = rule.test_pattern.replace(rule.variable_part, test.raw_value);
+          filteredText = filteredText.replace(exactPattern, '');
+        }
+      });
+    }
+
+    // Очищаем пустые заголовки анализов (текст до двоеточия без показателей после)
+    // Паттерн: "Определение ... в крови: " (двоеточие с пробелами, но без текста после до начала нового анализа)
+    filteredText = filteredText.replace(
+      /(?:Определение|Исследование|Выявление|Анализ)[^:]+:\s*(?=(?:Определение|Исследование|Выявление|Анализ|$))/gi,
+      ''
+    );
 
     // Очищаем лишние пробелы и знаки препинания
     filteredText = filteredText
-      .replace(/\s+/g, ' ')        // множественные пробелы -> один
-      .replace(/,\s*,/g, ',')       // двойные запятые
-      .replace(/^[,;\s]+/g, '')     // запятые/точки с запятой в начале
-      .replace(/[,;\s]+$/g, '')     // запятые/точки с запятой в конце
+      .replace(/\s+/g, ' ')
+      .replace(/,\s*,/g, ',')
+      .replace(/^[,;\s]+/g, '')
+      .replace(/[,;\s]+$/g, '')
       .trim();
 
     // Проверяем, нужно ли сокращать
@@ -197,11 +232,13 @@ async function loadData() {
       resultCell = '';
     }
 
-    // Формируем ячейки для динамических колонок
+    // Формируем ячейки для динамических колонок (анализов)
     let testColumnsCells = "";
     testColumns.forEach(testName => {
-      const value = testValues[testName] || "";
-      testColumnsCells += `<td>${value}</td>`;
+      const values = testValues[testName] || [];
+      // Объединяем значения через <br>
+      const cellContent = values.length > 0 ? values.join('<br>') : '';
+      testColumnsCells += `<td>${cellContent}</td>`;
     });
 
     // Определяем стиль для последней ячейки (результат полный)
@@ -336,7 +373,6 @@ function initTable() {
   for (const id of requiredElements) {
     if (!document.getElementById(id)) {
       console.error(`Element with id "${id}" not found. Retrying...`);
-      // Повторная попытка через 100ms
       setTimeout(initTable, 100);
       return;
     }
@@ -353,8 +389,7 @@ function initTable() {
   // Обработчик изменения количества записей на странице (верхний)
   perPageTop.addEventListener("change", (e) => {
     state.per_page = parseInt(e.target.value);
-    state.page = 1; // Сброс на первую страницу
-    // Синхронизируем оба селекта
+    state.page = 1;
     perPageBottom.value = state.per_page;
     loadData();
   });
@@ -362,8 +397,7 @@ function initTable() {
   // Обработчик изменения количества записей на странице (нижний)
   perPageBottom.addEventListener("change", (e) => {
     state.per_page = parseInt(e.target.value);
-    state.page = 1; // Сброс на первую страницу
-    // Синхронизируем оба селекта
+    state.page = 1;
     perPageTop.value = state.per_page;
     loadData();
   });
