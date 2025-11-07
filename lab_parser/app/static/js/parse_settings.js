@@ -65,6 +65,11 @@ function createIndicatorBlock(indicator = null) {
   block.className = "indicator-block";
   block.dataset.blockId = blockId;
 
+  // Сохраняем ID показателя для обновления
+  if (indicator && indicator.id) {
+    block.dataset.indicatorId = indicator.id;
+  }
+
   const indicatorNumber = indicatorsContainer.children.length + 1;
 
   block.innerHTML = `
@@ -168,6 +173,11 @@ async function editDefinition(id) {
     return;
   }
 
+  // Открываем модалку СНАЧАЛА (без очистки контейнера показателей)
+  document.getElementById("modal-title").textContent = "Изменить анализ";
+  modal.style.display = "flex";
+
+  // Заполняем основные поля
   document.getElementById("definition-id").value = definition.id;
   document.getElementById("full-example-text").value = definition.full_example_text;
   document.getElementById("short-description").value = definition.short_description;
@@ -184,8 +194,6 @@ async function editDefinition(id) {
     // Если показателей нет (не должно быть), добавляем один пустой
     indicatorsContainer.appendChild(createIndicatorBlock());
   }
-
-  openModal("Изменить анализ");
 }
 
 async function deleteDefinition(id) {

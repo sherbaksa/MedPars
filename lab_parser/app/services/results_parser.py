@@ -84,13 +84,16 @@ class ResultsParser:
 
         # Обрабатываем каждый анализ (группу показателей)
         for def_id, indicators in rules_by_definition.items():
+            # Создаем рабочую копию текста для этого анализа
+            working_text = raw_text
+
             # Для каждого показателя в этом анализе
             for compiled_rule in indicators:
                 rule = compiled_rule['rule']
                 pattern = compiled_rule['pattern']
                 value_type = compiled_rule['value_type']
 
-                match = pattern.search(raw_text)
+                match = pattern.search(working_text)
                 if match:
                     # Получили захваченное значение (сырое)
                     captured_value = match.group(1).strip()
@@ -123,6 +126,11 @@ class ResultsParser:
                         })
 
                         matched_rules.append(rule['id'])
+
+                        # ВАЖНО: Удаляем найденную часть из рабочего текста
+                        # чтобы следующий показатель этого же анализа искался в оставшейся части
+                        matched_text = match.group(0)
+                        working_text = working_text.replace(matched_text, '', 1)  # Удаляем только первое вхождение
 
         # Формируем краткую сводку
         summary = self._build_summary(tests, raw_text)
