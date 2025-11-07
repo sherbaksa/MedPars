@@ -100,16 +100,52 @@ async function loadData() {
     const tests = item.results?.tests || [];
     let filteredText = rawText;
 
+    // Группируем и удаляем показатели
+    const parsedDefinitions = {};
     tests.forEach(test => {
-      const ruleId = test.rule_id;
-      const rule = rulesMap[ruleId];
-      if (rule && rule.test_pattern) {
-        const pattern = rule.test_pattern.replace(rule.variable_part, test.raw_value);
-        filteredText = filteredText.replace(pattern, '');
+      const defId = test.test_definition_id || test.rule_id;
+      if (!parsedDefinitions[defId]) {
+        parsedDefinitions[defId] = [];
       }
+      parsedDefinitions[defId].push(test);
     });
 
-    filteredText = filteredText.replace(/\s+/g, ' ').trim();
+    for (const defId in parsedDefinitions) {
+      const indicators = parsedDefinitions[defId];
+      indicators.forEach(test => {
+        const ruleId = test.rule_id;
+        const rule = rulesMap[ruleId];
+        if (rule && rule.test_pattern) {
+          const pattern = rule.test_pattern.replace(rule.variable_part, test.raw_value);
+          // Удаляем с учетом возможной точки с запятой
+          filteredText = filteredText.replace(pattern + ';', '');
+          filteredText = filteredText.replace(pattern, '');
+        }
+      });
+    }
+
+    // Нормализуем двоеточия
+    filteredText = filteredText.replace(/:\s*[;,\s]*(?=(?:Определение|Исследование|Выявление|Анализ|$))/gi, ': ');
+
+    // Очищаем пустые заголовки анализов
+    filteredText = filteredText.replace(
+      /(?:Определение|Исследование|Выявление|Анализ)[^:]+:\s*(?=(?:Определение|Исследование|Выявление|Анализ|$))/gi,
+      ''
+    );
+
+    // Очищаем пустые заголовки анализов
+    filteredText = filteredText.replace(
+      /(?:Определение|Исследование|Выявление|Анализ)[^:]+:\s*(?=(?:Определение|Исследование|Выявление|Анализ|$))/gi,
+      ''
+    );
+
+    // Финальная очистка пробелов и знаков препинания
+    filteredText = filteredText
+      .replace(/\s+/g, ' ')
+      .replace(/[;,\s]+$/g, '')
+      .replace(/^[;,\s]+/g, '')
+      .trim();
+
     if (filteredText.length > 0) {
       hasUnparsedResults = true;
     }
@@ -192,13 +228,18 @@ async function loadData() {
         const rule = rulesMap[ruleId];
         if (rule && rule.test_pattern) {
           const exactPattern = rule.test_pattern.replace(rule.variable_part, test.raw_value);
+          // Удаляем паттерн вместе с возможной точкой с запятой после
+          filteredText = filteredText.replace(exactPattern + ';', '');
           filteredText = filteredText.replace(exactPattern, '');
         }
       });
     }
 
     // Очищаем пустые заголовки анализов (текст до двоеточия без показателей после)
-    // Паттерн: "Определение ... в крови: " (двоеточие с пробелами, но без текста после до начала нового анализа)
+    // Сначала удаляем лишние пробелы и символы после двоеточия
+    filteredText = filteredText.replace(/:\s*[;,\s]*(?=(?:Определение|Исследование|Выявление|Анализ|$))/gi, ': ');
+
+    // Затем удаляем заголовки которые остались без содержимого (двоеточие + пробелы/символы до конца или нового анализа)
     filteredText = filteredText.replace(
       /(?:Определение|Исследование|Выявление|Анализ)[^:]+:\s*(?=(?:Определение|Исследование|Выявление|Анализ|$))/gi,
       ''

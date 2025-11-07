@@ -707,3 +707,227 @@ code {
     gap: 12px;
   }
 }
+/* ========== Indicator Blocks (для настроек парсинга) ========== */
+.indicator-block {
+  border: 2px solid var(--border-color);
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ffffff 0%, #f9fbfd 100%);
+  position: relative;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.indicator-block:hover {
+  border-color: var(--primary-blue);
+  box-shadow: var(--shadow-md);
+}
+
+.indicator-block h5 {
+  margin: 0 0 20px 0;
+  color: var(--primary-blue-dark);
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--primary-blue-light);
+}
+
+.indicator-block .remove-indicator-btn {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.indicator-block .remove-indicator-btn:hover {
+  background-color: #c0392b;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.indicator-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.indicator-checkboxes {
+  display: flex;
+  gap: 24px;
+  margin-top: 15px;
+  padding: 12px;
+  background: var(--primary-blue-light);
+  border-radius: 8px;
+}
+
+.indicator-checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: color 0.2s ease;
+}
+
+.indicator-checkboxes label:hover {
+  color: var(--primary-blue);
+}
+
+.indicator-checkboxes input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--primary-blue);
+}
+
+/* Responsive для блоков показателей */
+@media (max-width: 768px) {
+  .indicator-row {
+    grid-template-columns: 1fr;
+  }
+
+  .indicator-checkboxes {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* ========== Адаптивная таблица с горизонтальной прокруткой ========== */
+
+/* Обертка для центрирования широких контейнеров */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  /* Позволяем расширяться для широких таблиц */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.content-card {
+  background: var(--bg-white);
+  border-radius: 12px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+  /* Позволяем расширяться до ширины экрана минус отступы */
+  width: 100%;
+  max-width: calc(100vw - 48px);
+  overflow-x: auto; /* Горизонтальная прокрутка при необходимости */
+}
+
+/* Обертка для таблицы с прокруткой */
+.table-wrapper {
+  overflow-x: auto;
+  margin: 20px -28px; /* Компенсируем padding контейнера */
+  padding: 0 28px;
+}
+
+/* Таблица с минимальными размерами колонок */
+table {
+  width: 100%;
+  min-width: 800px; /* Минимальная ширина таблицы */
+  border-collapse: collapse;
+  background: var(--bg-white);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Ограничиваем ширину некоторых колонок */
+th, td {
+  padding: 12px;
+  white-space: nowrap; /* Запрещаем перенос в заголовках */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Колонки с фиксированной шириной */
+th:nth-child(1), td:nth-child(1) { /* № */
+  width: 50px;
+  min-width: 50px;
+}
+
+th:nth-child(3), td:nth-child(3) { /* Пол */
+  width: 60px;
+  min-width: 60px;
+}
+
+th:nth-child(4), td:nth-child(4) { /* Возраст */
+  width: 80px;
+  min-width: 80px;
+}
+
+th:nth-child(5), td:nth-child(5) { /* ДР */
+  width: 110px;
+  min-width: 110px;
+}
+
+/* Колонки с минимальной шириной */
+th:nth-child(2), td:nth-child(2) { /* ФИО */
+  min-width: 180px;
+  max-width: 250px;
+}
+
+th:nth-child(6), td:nth-child(6) { /* Идентификатор */
+  min-width: 120px;
+  max-width: 150px;
+}
+
+th:nth-child(7), td:nth-child(7) { /* Отделение */
+  min-width: 150px;
+  max-width: 250px;
+}
+
+/* Динамические колонки анализов */
+.dynamic-test-col {
+  min-width: 100px;
+  max-width: 200px;
+}
+
+.dynamic-test-col + td {
+  min-width: 100px;
+  max-width: 200px;
+  white-space: normal; /* Разрешаем перенос для значений показателей */
+}
+
+/* Последняя колонка - результат полный */
+th:last-child, td:last-child {
+  min-width: 200px;
+  max-width: 400px;
+  white-space: normal; /* Разрешаем перенос */
+}
+
+/* Для длинного текста в ячейках */
+td {
+  word-wrap: break-word;
+}
+
+/* Responsive для мобильных */
+@media (max-width: 768px) {
+  .content-card {
+    max-width: calc(100vw - 24px);
+    min-width: calc(100vw - 24px);
+    padding: 16px;
+  }
+
+  .table-wrapper {
+    margin: 20px -16px;
+    padding: 0 16px;
+  }
+}
