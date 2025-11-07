@@ -14,6 +14,7 @@
       </select>
       <button id="apply">Применить</button>
       <button id="reset" class="secondary">Сбросить</button>
+      <button id="column-settings-btn" class="secondary">⚙️ Колонки</button>
       <button onclick="window.print()">Печать</button>
     </div>
 
@@ -30,6 +31,7 @@
         <option value="20">20 на странице</option>
         <option value="50">50 на странице</option>
         <option value="100">100 на странице</option>
+        <option value="all">Все</option>
       </select>
     </div>
 
@@ -37,33 +39,40 @@
       <table id="records">
         <thead>
           <tr id="table-header">
-            <th>#</th>
-            <th>ФИО</th>
-            <th>Пол</th>
-            <th>Возраст</th>
-            <th>ДР</th>
-            <th>Идентификатор</th>
-            <th>Отделение</th>
+            <th data-column-id="row_number">#</th>
+            <th data-column-id="fio">ФИО</th>
+            <th data-column-id="gender">Пол</th>
+            <th data-column-id="age">Возраст</th>
+            <th data-column-id="birth_date">ДР</th>
+            <th data-column-id="sample_id">Идентификатор</th>
+            <th data-column-id="department">Отделение</th>
             <!-- Динамические колонки тестов добавятся сюда -->
-            <th>Результат (полный)</th>
+            <th data-column-id="full_result">Результат (полный)</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
 
-    <!-- Пагинация снизу -->
-    <div class="controls no-print">
-      <button id="prev-bottom">← Назад</button>
-      <div id="page-numbers-bottom"></div>
-      <button id="next-bottom">Вперёд →</button>
-      <span id="pageinfo-bottom"></span>
-      <select id="per-page-bottom">
-        <option value="10">10 на странице</option>
-        <option value="20">20 на странице</option>
-        <option value="50">50 на странице</option>
-        <option value="100">100 на странице</option>
-      </select>
+
+  </div>
+
+  <!-- Модальное окно настроек колонок -->
+  <div id="column-settings-modal" class="modal">
+    <div class="modal-content">
+      <h3>Настройка колонок</h3>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">
+        Перетаскивайте колонки для изменения порядка. Снимите галочку, чтобы скрыть колонку.
+      </p>
+
+      <div id="columns-list" class="columns-list">
+        <!-- Список колонок будет добавлен динамически -->
+      </div>
+
+      <div class="form-actions">
+        <button id="reset-columns-btn" class="secondary">Сбросить</button>
+        <button id="close-modal-btn" class="secondary">Закрыть</button>
+      </div>
     </div>
   </div>
 

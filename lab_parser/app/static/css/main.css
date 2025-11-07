@@ -805,14 +805,13 @@ code {
   }
 }
 
-/* ========== Адаптивная таблица с горизонтальной прокруткой ========== */
+/* ========== Адаптивная таблица с вертикальной прокруткой ========== */
 
 /* Обертка для центрирования широких контейнеров */
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
-  /* Позволяем расширяться для широких таблиц */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -825,23 +824,57 @@ code {
   margin-bottom: 24px;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-color);
-  /* Позволяем расширяться до ширины экрана минус отступы */
   width: 100%;
   max-width: calc(100vw - 48px);
-  overflow-x: auto; /* Горизонтальная прокрутка при необходимости */
+  /* Убираем overflow-x из content-card, так как он будет в table-wrapper */
 }
 
 /* Обертка для таблицы с прокруткой */
 .table-wrapper {
   overflow-x: auto;
-  margin: 20px -28px; /* Компенсируем padding контейнера */
+  overflow-y: auto;
+  margin: 20px -28px;
   padding: 0 28px;
+  /* Вычисляем максимальную высоту:
+     100vh - высота header (~80px) - отступы и padding (~200px для контролов и заголовка) */
+  max-height: calc(100vh - 280px);
+  /* Минимальная высота для комфортного отображения */
+  min-height: 400px;
+  position: relative;
+  border-radius: 8px;
+}
+
+/* Стилизация полосы прокрутки для webkit браузеров */
+.table-wrapper::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: var(--bg-gray);
+  border-radius: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--primary-blue);
+  border-radius: 6px;
+  border: 2px solid var(--bg-gray);
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-blue-dark);
+}
+
+/* Стилизация для Firefox */
+.table-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-blue) var(--bg-gray);
 }
 
 /* Таблица с минимальными размерами колонок */
 table {
   width: 100%;
-  min-width: 800px; /* Минимальная ширина таблицы */
+  min-width: 800px;
   border-collapse: collapse;
   background: var(--bg-white);
   border-radius: 8px;
@@ -849,15 +882,62 @@ table {
   box-shadow: var(--shadow-sm);
 }
 
-/* Ограничиваем ширину некоторых колонок */
-th, td {
-  padding: 12px;
-  white-space: nowrap; /* Запрещаем перенос в заголовках */
+/* Фиксированный заголовок таблицы */
+thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+  color: white;
+}
+
+/* Тень под заголовком при прокрутке */
+thead::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.1), transparent);
+  pointer-events: none;
+}
+
+th {
+  padding: 14px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Колонки с фиксированной шириной */
+td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+}
+
+tbody tr {
+  transition: background 0.15s ease;
+}
+
+tbody tr:hover {
+  background: var(--primary-blue-light);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Ограничиваем ширину некоторых колонок */
 th:nth-child(1), td:nth-child(1) { /* № */
   width: 50px;
   min-width: 50px;
@@ -903,19 +983,14 @@ th:nth-child(7), td:nth-child(7) { /* Отделение */
 .dynamic-test-col + td {
   min-width: 100px;
   max-width: 200px;
-  white-space: normal; /* Разрешаем перенос для значений показателей */
+  white-space: normal;
 }
 
 /* Последняя колонка - результат полный */
 th:last-child, td:last-child {
   min-width: 200px;
   max-width: 400px;
-  white-space: normal; /* Разрешаем перенос */
-}
-
-/* Для длинного текста в ячейках */
-td {
-  word-wrap: break-word;
+  white-space: normal;
 }
 
 /* Responsive для мобильных */
@@ -929,5 +1004,117 @@ td {
   .table-wrapper {
     margin: 20px -16px;
     padding: 0 16px;
+    max-height: calc(100vh - 320px);
+    min-height: 300px;
+  }
+}
+
+/* Номера страниц - дополнительный стиль для корректного скрытия */
+#page-numbers-top, #page-numbers-bottom {
+  transition: opacity 0.2s ease;
+}
+
+/* Стили для печати - убираем прокрутку и показываем всю таблицу */
+@media print {
+  .table-wrapper {
+    overflow: visible !important;
+    max-height: none !important;
+    min-height: 0 !important;
+  }
+
+  thead {
+    position: static !important;
+  }
+}
+/* ========== Управление колонками (добавить в конец main.css) ========== */
+
+.columns-list {
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 8px;
+  background: var(--bg-gray);
+  border-radius: 8px;
+}
+
+.column-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  background: var(--bg-white);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  cursor: move;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.column-item:hover {
+  border-color: var(--primary-blue);
+  box-shadow: var(--shadow-sm);
+  transform: translateX(4px);
+}
+
+.column-item.dragging {
+  opacity: 0.5;
+  transform: rotate(2deg);
+}
+
+.column-item.drag-over {
+  border-color: var(--accent-teal);
+  background: var(--primary-blue-light);
+  border-style: dashed;
+}
+
+.column-item .drag-handle {
+  font-size: 20px;
+  color: var(--text-secondary);
+  cursor: grab;
+  line-height: 1;
+}
+
+.column-item .drag-handle:active {
+  cursor: grabbing;
+}
+
+.column-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--primary-blue);
+  margin: 0;
+}
+
+.column-item label {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  margin: 0;
+}
+
+.column-item.disabled {
+  opacity: 0.5;
+}
+
+.column-item.disabled label {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+/* Скрытие колонок в таблице */
+.hidden-column {
+  display: none !important;
+}
+
+/* Адаптивность для модального окна с колонками */
+@media (max-width: 768px) {
+  .columns-list {
+    max-height: 400px;
+  }
+
+  .column-item {
+    padding: 10px 12px;
   }
 }
