@@ -31,60 +31,67 @@ body {
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 24px;
 }
 
-/* ========== Header & Navigation ========== */
+/* ========== Header & Navigation (Фиксированный) ========== */
 header {
   background: var(--bg-white);
-  padding: 20px 0;
-  margin-bottom: 32px;
+  padding: 16px 0;
+  margin-bottom: 24px;
   box-shadow: var(--shadow-sm);
   border-bottom: 3px solid var(--primary-blue);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 header .container {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 20px;
 }
 
 h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--primary-blue);
   letter-spacing: -0.5px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 h1::before {
   content: "⚕";
-  font-size: 32px;
+  font-size: 28px;
   color: var(--accent-teal);
 }
 
 nav {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 nav a {
-  padding: 10px 18px;
+  padding: 8px 16px;
   text-decoration: none;
   color: var(--text-secondary);
   font-weight: 500;
-  font-size: 15px;
+  font-size: 14px;
   border-radius: 8px;
   transition: all 0.2s ease;
   position: relative;
+  white-space: nowrap;
 }
 
 nav a:hover {
@@ -155,6 +162,8 @@ nav a.active {
   margin-bottom: 24px;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border-color);
+  width: 100%;
+  max-width: calc(100vw - 48px);
 }
 
 h2 {
@@ -244,14 +253,24 @@ table {
   width: 100%;
   border-collapse: collapse;
   background: var(--bg-white);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  min-width: 800px;
 }
 
 thead {
   background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
   color: white;
+}
+
+/* Тень под заголовком таблицы */
+.table-header-wrapper::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.15), transparent);
+  pointer-events: none;
 }
 
 th {
@@ -262,11 +281,18 @@ th {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 td {
   padding: 12px;
   border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
 }
 
 tbody tr {
@@ -279,6 +305,61 @@ tbody tr:hover {
 
 tbody tr:last-child td {
   border-bottom: none;
+}
+
+/* Ограничиваем ширину некоторых колонок */
+th:nth-child(1), td:nth-child(1) { /* № */
+  width: 50px;
+  min-width: 50px;
+}
+
+th:nth-child(3), td:nth-child(3) { /* Пол */
+  width: 60px;
+  min-width: 60px;
+}
+
+th:nth-child(4), td:nth-child(4) { /* Возраст */
+  width: 80px;
+  min-width: 80px;
+}
+
+th:nth-child(5), td:nth-child(5) { /* ДР */
+  width: 110px;
+  min-width: 110px;
+}
+
+th:nth-child(2), td:nth-child(2) { /* ФИО */
+  min-width: 180px;
+  max-width: 250px;
+}
+
+th:nth-child(6), td:nth-child(6) { /* Идентификатор */
+  min-width: 120px;
+  max-width: 150px;
+}
+
+th:nth-child(7), td:nth-child(7) { /* Отделение */
+  min-width: 150px;
+  max-width: 250px;
+}
+
+/* Динамические колонки анализов */
+.dynamic-test-col {
+  min-width: 100px;
+  max-width: 200px;
+}
+
+.dynamic-test-col + td {
+  min-width: 100px;
+  max-width: 200px;
+  white-space: normal;
+}
+
+/* Последняя колонка - результат полный */
+th:last-child, td:last-child {
+  min-width: 200px;
+  max-width: 400px;
+  white-space: normal;
 }
 
 /* ========== Links ========== */
@@ -328,7 +409,8 @@ a:hover {
   align-items: center;
 }
 
-#pageinfo {
+#pageinfo-top,
+#pageinfo-bottom {
   padding: 8px 16px;
   background: var(--bg-gray);
   border-radius: 6px;
@@ -346,10 +428,12 @@ a:hover {
 }
 
 /* Номера страниц */
-#page-numbers {
+#page-numbers-top,
+#page-numbers-bottom {
   display: flex;
   gap: 6px;
   align-items: center;
+  transition: opacity 0.2s ease;
 }
 
 .page-btn {
@@ -380,7 +464,8 @@ a:hover {
   font-weight: 500;
 }
 
-#per-page {
+#per-page-top,
+#per-page-bottom {
   margin-left: auto;
 }
 
@@ -393,63 +478,6 @@ ol li, ul li {
   margin: 8px 0;
 }
 
-/* ========== Print Styles ========== */
-@media print {
-  body {
-    background: white;
-  }
-
-  .no-print {
-    display: none !important;
-  }
-
-  .result-short {
-    display: none !important;
-  }
-
-  .result-full {
-    display: inline !important;
-  }
-
-  .collapse-link {
-    display: none !important;
-  }
-
-  header {
-    box-shadow: none;
-    border-bottom: 2px solid #000;
-  }
-
-  table {
-    box-shadow: none;
-  }
-}
-
-/* ========== Responsive ========== */
-@media (max-width: 768px) {
-  header .container {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  nav {
-    width: 100%;
-  }
-
-  nav a {
-    flex: 1;
-    text-align: center;
-  }
-
-  .controls {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  input[type="search"] {
-    width: 100%;
-  }
-}
 /* ========== Modal Window ========== */
 .modal {
   display: none;
@@ -595,22 +623,7 @@ code {
   background: #c0392b;
 }
 
-/* ========== Responsive Modal ========== */
-@media (max-width: 768px) {
-  .modal-content {
-    width: 95%;
-    padding: 24px;
-  }
-
-  .form-actions {
-    flex-direction: column;
-  }
-
-  .form-actions button {
-    width: 100%;
-  }
-}
-/* ========== Indicator Blocks (для настроек парсинга) ========== */
+/* ========== Indicator Blocks ========== */
 .indicator-block {
   border: 2px solid var(--border-color);
   padding: 20px;
@@ -696,337 +709,79 @@ code {
   accent-color: var(--primary-blue);
 }
 
-/* Responsive для блоков показателей */
-@media (max-width: 768px) {
-  .indicator-row {
-    grid-template-columns: 1fr;
-  }
+/* ========== Таблица с вертикальной прокруткой ========== */
 
-  .indicator-checkboxes {
-    flex-direction: column;
-    gap: 12px;
-  }
-}
-/* ========== Indicator Blocks (для настроек парсинга) ========== */
-.indicator-block {
-  border: 2px solid var(--border-color);
-  padding: 20px;
-  margin-bottom: 20px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #ffffff 0%, #f9fbfd 100%);
+.table-wrapper {
+  margin: 20px -28px;
+  padding: 0;
   position: relative;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s ease;
-}
-
-.indicator-block:hover {
-  border-color: var(--primary-blue);
-  box-shadow: var(--shadow-md);
-}
-
-.indicator-block h5 {
-  margin: 0 0 20px 0;
-  color: var(--primary-blue-dark);
-  font-size: 16px;
-  font-weight: 600;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--primary-blue-light);
-}
-
-.indicator-block .remove-indicator-btn {
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  box-shadow: var(--shadow-sm);
-}
-
-.indicator-block .remove-indicator-btn:hover {
-  background-color: #c0392b;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.indicator-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-bottom: 10px;
-}
-
-.indicator-checkboxes {
-  display: flex;
-  gap: 24px;
-  margin-top: 15px;
-  padding: 12px;
-  background: var(--primary-blue-light);
   border-radius: 8px;
-}
-
-.indicator-checkboxes label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  color: var(--text-primary);
-  transition: color 0.2s ease;
-}
-
-.indicator-checkboxes label:hover {
-  color: var(--primary-blue);
-}
-
-.indicator-checkboxes input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  cursor: pointer;
-  accent-color: var(--primary-blue);
-}
-
-/* Responsive для блоков показателей */
-@media (max-width: 768px) {
-  .indicator-row {
-    grid-template-columns: 1fr;
-  }
-
-  .indicator-checkboxes {
-    flex-direction: column;
-    gap: 12px;
-  }
-}
-
-/* ========== Адаптивная таблица с вертикальной прокруткой ========== */
-
-/* Обертка для центрирования широких контейнеров */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
+  max-height: calc(100vh - 240px);
+  min-height: 400px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  overflow: hidden;
 }
 
-.content-card {
-  background: var(--bg-white);
-  border-radius: 12px;
-  padding: 28px;
-  margin-bottom: 24px;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-color);
-  width: 100%;
-  max-width: calc(100vw - 48px);
-  /* Убираем overflow-x из content-card, так как он будет в table-wrapper */
+/* Контейнер для фиксированного заголовка */
+.table-header-wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-shrink: 0;
+  padding: 0 28px;
+  position: relative;
 }
 
-/* Обертка для таблицы с прокруткой */
-.table-wrapper {
+.table-header-wrapper::-webkit-scrollbar {
+  height: 0;
+  display: none;
+}
+
+/* Контейнер для прокручиваемого тела таблицы */
+.table-body-wrapper {
   overflow-x: auto;
   overflow-y: auto;
-  margin: 20px -28px;
+  flex: 1;
   padding: 0 28px;
-  /* Вычисляем максимальную высоту:
-     100vh - высота header (~80px) - отступы и padding (~200px для контролов и заголовка) */
-  max-height: calc(100vh - 280px);
-  /* Минимальная высота для комфортного отображения */
-  min-height: 400px;
-  position: relative;
-  border-radius: 8px;
 }
 
-/* Стилизация полосы прокрутки для webkit браузеров */
-.table-wrapper::-webkit-scrollbar {
+/* Стилизация полосы прокрутки для tbody wrapper */
+.table-body-wrapper::-webkit-scrollbar {
   width: 12px;
   height: 12px;
 }
 
-.table-wrapper::-webkit-scrollbar-track {
+.table-body-wrapper::-webkit-scrollbar-track {
   background: var(--bg-gray);
   border-radius: 6px;
 }
 
-.table-wrapper::-webkit-scrollbar-thumb {
+.table-body-wrapper::-webkit-scrollbar-thumb {
   background: var(--primary-blue);
   border-radius: 6px;
   border: 2px solid var(--bg-gray);
 }
 
-.table-wrapper::-webkit-scrollbar-thumb:hover {
+.table-body-wrapper::-webkit-scrollbar-thumb:hover {
   background: var(--primary-blue-dark);
 }
 
 /* Стилизация для Firefox */
-.table-wrapper {
+.table-body-wrapper {
   scrollbar-width: thin;
   scrollbar-color: var(--primary-blue) var(--bg-gray);
 }
 
-/* Таблица с минимальными размерами колонок */
-table {
+/* Таблицы внутри контейнеров */
+.table-header-wrapper table,
+.table-body-wrapper table {
   width: 100%;
   min-width: 800px;
   border-collapse: collapse;
   background: var(--bg-white);
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
 }
 
-/* Фиксированный заголовок таблицы */
-thead {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
-  color: white;
-}
-
-/* Тень под заголовком при прокрутке */
-thead::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -4px;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.1), transparent);
-  pointer-events: none;
-}
-
-th {
-  padding: 14px 12px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-td {
-  padding: 12px;
-  border-bottom: 1px solid var(--border-color);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  word-wrap: break-word;
-}
-
-tbody tr {
-  transition: background 0.15s ease;
-}
-
-tbody tr:hover {
-  background: var(--primary-blue-light);
-}
-
-tbody tr:last-child td {
-  border-bottom: none;
-}
-
-/* Ограничиваем ширину некоторых колонок */
-th:nth-child(1), td:nth-child(1) { /* № */
-  width: 50px;
-  min-width: 50px;
-}
-
-th:nth-child(3), td:nth-child(3) { /* Пол */
-  width: 60px;
-  min-width: 60px;
-}
-
-th:nth-child(4), td:nth-child(4) { /* Возраст */
-  width: 80px;
-  min-width: 80px;
-}
-
-th:nth-child(5), td:nth-child(5) { /* ДР */
-  width: 110px;
-  min-width: 110px;
-}
-
-/* Колонки с минимальной шириной */
-th:nth-child(2), td:nth-child(2) { /* ФИО */
-  min-width: 180px;
-  max-width: 250px;
-}
-
-th:nth-child(6), td:nth-child(6) { /* Идентификатор */
-  min-width: 120px;
-  max-width: 150px;
-}
-
-th:nth-child(7), td:nth-child(7) { /* Отделение */
-  min-width: 150px;
-  max-width: 250px;
-}
-
-/* Динамические колонки анализов */
-.dynamic-test-col {
-  min-width: 100px;
-  max-width: 200px;
-}
-
-.dynamic-test-col + td {
-  min-width: 100px;
-  max-width: 200px;
-  white-space: normal;
-}
-
-/* Последняя колонка - результат полный */
-th:last-child, td:last-child {
-  min-width: 200px;
-  max-width: 400px;
-  white-space: normal;
-}
-
-/* Responsive для мобильных */
-@media (max-width: 768px) {
-  .content-card {
-    max-width: calc(100vw - 24px);
-    min-width: calc(100vw - 24px);
-    padding: 16px;
-  }
-
-  .table-wrapper {
-    margin: 20px -16px;
-    padding: 0 16px;
-    max-height: calc(100vh - 320px);
-    min-height: 300px;
-  }
-}
-
-/* Номера страниц - дополнительный стиль для корректного скрытия */
-#page-numbers-top, #page-numbers-bottom {
-  transition: opacity 0.2s ease;
-}
-
-/* Стили для печати - убираем прокрутку и показываем всю таблицу */
-@media print {
-  .table-wrapper {
-    overflow: visible !important;
-    max-height: none !important;
-    min-height: 0 !important;
-  }
-
-  thead {
-    position: static !important;
-  }
-}
-/* ========== Управление колонками (добавить в конец main.css) ========== */
+/* ========== Управление колонками ========== */
 
 .columns-list {
   max-height: 500px;
@@ -1108,13 +863,123 @@ th:last-child, td:last-child {
   display: none !important;
 }
 
-/* Адаптивность для модального окна с колонками */
+/* ========== Print Styles ========== */
+@media print {
+  body {
+    background: white;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .result-short {
+    display: none !important;
+  }
+
+  .result-full {
+    display: inline !important;
+  }
+
+  .collapse-link {
+    display: none !important;
+  }
+
+  header {
+    box-shadow: none;
+    border-bottom: 2px solid #000;
+    position: static;
+  }
+
+  table {
+    box-shadow: none;
+  }
+
+  .table-wrapper {
+    max-height: none !important;
+    min-height: 0 !important;
+    display: block !important;
+  }
+
+  .table-header-wrapper,
+  .table-body-wrapper {
+    overflow: visible !important;
+    max-height: none !important;
+    padding: 0 !important;
+  }
+}
+
+/* ========== Responsive ========== */
+
+/* Адаптация header для узких экранов */
+@media (max-width: 900px) {
+  h1 {
+    font-size: 20px;
+  }
+
+  h1::before {
+    font-size: 24px;
+  }
+
+  nav a {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Для очень узких экранов - переносим меню */
+@media (max-width: 650px) {
+  header .container {
+    flex-wrap: wrap;
+  }
+
+  nav {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 768px) {
+  .content-card {
+    max-width: calc(100vw - 24px);
+    min-width: calc(100vw - 24px);
+    padding: 16px;
+  }
+
+  .table-wrapper {
+    margin: 20px -16px;
+    padding: 0 16px;
+    max-height: calc(100vh - 280px);
+    min-height: 300px;
+  }
+
+  .indicator-row {
+    grid-template-columns: 1fr;
+  }
+
+  .indicator-checkboxes {
+    flex-direction: column;
+    gap: 12px;
+  }
+
   .columns-list {
     max-height: 400px;
   }
 
   .column-item {
     padding: 10px 12px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 24px;
   }
 }

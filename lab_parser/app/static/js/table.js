@@ -536,6 +536,16 @@ async function loadData() {
   // Применяем настройки колонок к ячейкам
   applyColumnSettings();
 
+  // Синхронизация горизонтальной прокрутки между header и body
+  const headerWrapper = document.querySelector('.table-header-wrapper');
+  const bodyWrapper = document.querySelector('.table-body-wrapper');
+
+  if (headerWrapper && bodyWrapper) {
+    bodyWrapper.addEventListener('scroll', () => {
+      headerWrapper.scrollLeft = bodyWrapper.scrollLeft;
+    });
+  }
+
   // Добавляем обработчики для раскрытия/свертывания результатов
   tbody.querySelectorAll('.expand-link').forEach(link => {
     link.addEventListener('click', (e) => {
