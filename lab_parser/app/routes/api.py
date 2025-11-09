@@ -216,7 +216,6 @@ def records():
     Применяет правила парсинга если они есть.
     """
     page = max(int(request.args.get("page", 1)), 1)
-    # Убираем ограничение в 100, теперь максимум 1000000 (практически без ограничений)
     per_page = min(max(int(request.args.get("per_page", 20)), 1), 1000000)
 
     q = request.args.get("q")
@@ -242,6 +241,7 @@ def records():
                 "items": [],
                 "facets": {"departments": [], "genders": []},
                 "test_columns": [],
+                "test_key_indicators": {},
                 "message": "Нет загруженных файлов. Перейдите на страницу загрузки.",
                 "batch": None
             })
@@ -262,20 +262,17 @@ def records():
         return jsonify({"error": f"failed to read excel: {e}"}), 500
 
     # Собираем уникальные колонки тестов из всех записей
-    # Теперь группируем по анализам (test_definition), а не по отдельным показателям
     test_definitions_set = set()
-    test_def_names = {}  # mapping: test_definition_id -> short_name
+    test_def_names = {}
 
     for item in data:
         tests = item.get("results", {}).get("tests", [])
         for test in tests:
             test_def_id = test.get("test_definition_id", test.get("rule_id"))
-            # Убираем суффикс -1, -2 из имени чтобы получить базовое имя анализа
             base_name = test["name"].split('-')[0] if '-' in test["name"] else test["name"]
             test_definitions_set.add(test_def_id)
             test_def_names[test_def_id] = base_name
 
-    # Сортируем колонки для стабильного порядка (по именам анализов)
     test_columns = sorted([test_def_names[def_id] for def_id in test_definitions_set])
 
     # Создаем маппинг rule_id -> test_pattern для фильтрации на клиенте
@@ -286,6 +283,60 @@ def records():
             'variable_part': rule['variable_part'],
             'short_name': rule['short_name']
         }
+
+    # НОВОЕ: Собираем информацию о ключевых показателях для каждого анализа
+    test_key_indicators = {}
+
+    # Группируем правила по test_definition_id
+    definitions_map = {}
+    for rule in rules:
+        def_id = rule.get('test_definition_id', rule['id'])
+        if def_id not in definitions_map:
+            definitions_map[def_id] = []
+        definitions_map[def_id].append(rule)
+
+    # Для каждого определения анализа находим ключевой показатель
+    for def_id, indicators in definitions_map.items():
+        # Находим ключевой показатель (is_key_indicator = True)
+        key_indicator = None
+        for indicator in indicators:
+            if indicator.get('is_key_indicator', True):  # По умолчанию True для старых данных
+                key_indicator = indicator
+                break
+
+        if not key_indicator:
+            # Если нет явно указанного ключевого, берём первый
+            key_indicator = indicators[0] if indicators else None
+
+        if key_indicator:
+            # Получаем базовое имя анализа
+            base_name = test_def_names.get(def_id)
+            if not base_name:
+                continue
+
+            # Собираем уникальные значения этого ключевого показателя из всех записей
+            # ВАЖНО: Используем raw_value (исходное значение), а не нормализованное
+            possible_values = set()
+            for item in data:
+                tests = item.get("results", {}).get("tests", [])
+                for test in tests:
+                    test_def = test.get("test_definition_id", test.get("rule_id"))
+                    if test_def == def_id and test.get("rule_id") == key_indicator['id']:
+                        # Это нужный показатель
+                        if test.get("is_key_indicator", True):
+                            # Используем raw_value для фильтра (исходное значение из таблицы)
+                            raw_value = test.get("raw_value")
+                            if raw_value:
+                                possible_values.add(str(raw_value))
+
+            # Формируем информацию о ключевом показателе
+            test_key_indicators[base_name] = {
+                "rule_id": key_indicator['id'],
+                "test_definition_id": def_id,
+                "indicator_name": key_indicator['short_name'],
+                "possible_values": sorted(list(possible_values)),
+                "value_type": key_indicator['value_type']
+            }
 
     # простые фильтры
     def _match(item):
@@ -305,14 +356,12 @@ def records():
         if gender:
             patient_gender = p.get("gender")
             match = patient_gender == gender
-            # Отладка
             if not match and patient_gender:
                 print(f"Не совпало: '{patient_gender}' != '{gender}'")
             ok = ok and match
         if department:
             item_dept = item.get("department")
             match = item_dept == department
-            # Отладка
             if not match and item_dept:
                 print(f"Не совпало отделение: '{item_dept}' != '{department}'")
             ok = ok and match
@@ -336,6 +385,7 @@ def records():
         "items": items,
         "facets": facets,
         "test_columns": test_columns,
+        "test_key_indicators": test_key_indicators,  # НОВОЕ ПОЛЕ
         "rules_map": rules_map,
         "batch": batch
     })

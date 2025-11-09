@@ -10,13 +10,18 @@ const state = {
   gender: "",
   department: "",
   batch: initialBatch,
-  showAll: false  // Флаг для отображения всех записей
+  showAll: false,
+  testFilters: {}  // НОВОЕ: Фильтры по анализам { "COVID-19": ["Обнаружено"], ... }
 };
+
+// Глобальные данные
+let allRecords = [];  // Все записи (до пагинации)
+let testKeyIndicators = {};  // Информация о ключевых показателях
 
 // Настройки колонок (порядок и видимость)
 let columnSettings = {
-  order: [],  // Порядок колонок по их ID
-  hidden: []  // Скрытые колонки
+  order: [],
+  hidden: []
 };
 
 // Загрузка настроек колонок из localStorage
@@ -61,15 +66,12 @@ function applyColumnSettings() {
   const headerRow = document.getElementById("table-header");
   const allColumns = getAllColumns();
 
-  // Если нет сохраненного порядка - используем текущий
   if (columnSettings.order.length === 0) {
     columnSettings.order = allColumns.map(col => col.id);
   }
 
-  // Обновляем порядок колонок
   const newOrder = [];
 
-  // Сначала добавляем колонки в сохраненном порядке
   columnSettings.order.forEach(colId => {
     const th = headerRow.querySelector(`th[data-column-id="${colId}"]`);
     if (th) {
@@ -77,7 +79,6 @@ function applyColumnSettings() {
     }
   });
 
-  // Добавляем новые колонки, которых не было в настройках
   allColumns.forEach(col => {
     if (!columnSettings.order.includes(col.id)) {
       const th = headerRow.querySelector(`th[data-column-id="${col.id}"]`);
@@ -88,11 +89,9 @@ function applyColumnSettings() {
     }
   });
 
-  // Перестраиваем заголовок
   headerRow.innerHTML = '';
   newOrder.forEach(th => headerRow.appendChild(th));
 
-  // Применяем скрытие колонок
   allColumns.forEach((col, index) => {
     const isHidden = columnSettings.hidden.includes(col.id);
     const th = headerRow.querySelector(`th[data-column-id="${col.id}"]`);
@@ -105,11 +104,9 @@ function applyColumnSettings() {
       }
     }
 
-    // Применяем к ячейкам в tbody
     const tbody = document.querySelector("#records tbody");
     tbody.querySelectorAll('tr').forEach(tr => {
       const cells = tr.querySelectorAll('td');
-      // Находим индекс колонки в текущем порядке
       const colIndex = Array.from(headerRow.querySelectorAll('th')).findIndex(
         th => th.getAttribute('data-column-id') === col.id
       );
@@ -127,32 +124,246 @@ function applyColumnSettings() {
   saveColumnSettings();
 }
 
+// НОВОЕ: Открытие фильтра для колонки анализа
+function openTestFilter(testName, event) {
+  event.stopPropagation();
+
+  // Закрываем все открытые фильтры
+  document.querySelectorAll('.test-filter-menu').forEach(menu => menu.remove());
+
+  const indicator = testKeyIndicators[testName];
+  if (!indicator) return;
+
+  // Создаём меню фильтра
+  const menu = document.createElement('div');
+  menu.className = 'test-filter-menu';
+
+  // Заголовок
+  const header = document.createElement('div');
+  header.className = 'filter-menu-header';
+  header.innerHTML = `
+    <strong>Фильтр: ${testName}</strong><br>
+    <small>Показатель: ${indicator.indicator_name}</small>
+  `;
+  menu.appendChild(header);
+
+  // Список значений с чекбоксами
+  const valuesList = document.createElement('div');
+  valuesList.className = 'filter-values-list';
+
+  const currentFilters = state.testFilters[testName] || [];
+
+  indicator.possible_values.forEach(value => {
+    const label = document.createElement('label');
+    label.className = 'filter-value-item';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = value;
+    checkbox.checked = currentFilters.includes(value);
+
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        if (!state.testFilters[testName]) {
+          state.testFilters[testName] = [];
+        }
+        if (!state.testFilters[testName].includes(value)) {
+          state.testFilters[testName].push(value);
+        }
+      } else {
+        if (state.testFilters[testName]) {
+          state.testFilters[testName] = state.testFilters[testName].filter(v => v !== value);
+          if (state.testFilters[testName].length === 0) {
+            delete state.testFilters[testName];
+          }
+        }
+      }
+    });
+
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(' ' + value));
+    valuesList.appendChild(label);
+  });
+
+  menu.appendChild(valuesList);
+
+  // Кнопки действий
+  const actions = document.createElement('div');
+  actions.className = 'filter-menu-actions';
+
+  const selectAllBtn = document.createElement('button');
+  selectAllBtn.textContent = 'Все';
+  selectAllBtn.className = 'filter-btn-small';
+  selectAllBtn.addEventListener('click', () => {
+    valuesList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.checked = true;
+      cb.dispatchEvent(new Event('change'));
+    });
+  });
+
+  const clearBtn = document.createElement('button');
+  clearBtn.textContent = 'Сбросить';
+  clearBtn.className = 'filter-btn-small';
+  clearBtn.addEventListener('click', () => {
+    valuesList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.checked = false;
+      cb.dispatchEvent(new Event('change'));
+    });
+  });
+
+  const applyBtn = document.createElement('button');
+  applyBtn.textContent = 'Применить';
+  applyBtn.className = 'filter-btn-primary';
+  applyBtn.addEventListener('click', () => {
+    menu.remove();
+    applyFilters();
+  });
+
+  actions.appendChild(selectAllBtn);
+  actions.appendChild(clearBtn);
+  actions.appendChild(applyBtn);
+  menu.appendChild(actions);
+
+  // Позиционируем меню под иконкой
+  const icon = event.currentTarget;
+  const rect = icon.getBoundingClientRect();
+  menu.style.position = 'fixed';
+  menu.style.top = (rect.bottom + 5) + 'px';
+  menu.style.left = rect.left + 'px';
+
+  document.body.appendChild(menu);
+
+  // Закрытие при клике вне меню
+  setTimeout(() => {
+    const closeHandler = (e) => {
+      if (!menu.contains(e.target) && e.target !== icon) {
+        menu.remove();
+        document.removeEventListener('click', closeHandler);
+      }
+    };
+    document.addEventListener('click', closeHandler);
+  }, 0);
+}
+
+// НОВОЕ: Применение фильтров
+function applyFilters() {
+  state.page = 1;  // Сбрасываем на первую страницу
+  renderTable();
+  updateActiveFiltersPanel();
+}
+
+// НОВОЕ: Обновление панели активных фильтров
+function updateActiveFiltersPanel() {
+  let panel = document.getElementById('active-filters-panel');
+
+  const hasFilters = Object.keys(state.testFilters).length > 0;
+
+  if (!hasFilters) {
+    if (panel) panel.remove();
+    return;
+  }
+
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'active-filters-panel';
+    panel.className = 'active-filters-panel';
+
+    const metaDiv = document.getElementById('meta');
+    metaDiv.parentNode.insertBefore(panel, metaDiv.nextSibling);
+  }
+
+  panel.innerHTML = '<strong>Активные фильтры анализов:</strong> ';
+
+  const filterTags = document.createElement('div');
+  filterTags.className = 'filter-tags';
+
+  Object.keys(state.testFilters).forEach(testName => {
+    const values = state.testFilters[testName];
+    if (values && values.length > 0) {
+      const tag = document.createElement('span');
+      tag.className = 'filter-tag';
+      tag.innerHTML = `
+        ${testName}: ${values.join(', ')}
+        <span class="filter-tag-close" data-test="${testName}">×</span>
+      `;
+
+      tag.querySelector('.filter-tag-close').addEventListener('click', () => {
+        delete state.testFilters[testName];
+        applyFilters();
+      });
+
+      filterTags.appendChild(tag);
+    }
+  });
+
+  const clearAllBtn = document.createElement('button');
+  clearAllBtn.textContent = 'Очистить все';
+  clearAllBtn.className = 'filter-clear-all';
+  clearAllBtn.addEventListener('click', () => {
+    state.testFilters = {};
+    applyFilters();
+  });
+
+  panel.appendChild(filterTags);
+  panel.appendChild(clearAllBtn);
+}
+
+// НОВОЕ: Фильтрация записей по анализам
+function filterRecordsByTests(records) {
+  if (Object.keys(state.testFilters).length === 0) {
+    return records;
+  }
+
+  return records.filter(item => {
+    // Режим ИЛИ: запись подходит если соответствует ХОТЯ БЫ ОДНОМУ фильтру
+    for (const testName in state.testFilters) {
+      const filterValues = state.testFilters[testName];
+      if (!filterValues || filterValues.length === 0) continue;
+
+      // Ищем ключевой показатель этого анализа в записи
+      const tests = item.results?.tests || [];
+      const indicator = testKeyIndicators[testName];
+      if (!indicator) continue;
+
+      for (const test of tests) {
+        // Проверяем что это нужный анализ и ключевой показатель
+        if (test.test_definition_id === indicator.test_definition_id &&
+            test.rule_id === indicator.rule_id &&
+            test.is_key_indicator) {
+          // Проверяем значение
+          const rawValue = test.raw_value;
+          if (filterValues.includes(rawValue)) {
+            return true;  // Найдено совпадение - показываем запись
+          }
+        }
+      }
+    }
+
+    return false;  // Не найдено совпадений ни по одному фильтру
+  });
+}
+
 // Открытие модального окна настроек колонок
 function openColumnSettings() {
   const modal = document.getElementById('column-settings-modal');
   const columnsList = document.getElementById('columns-list');
   const allColumns = getAllColumns();
 
-  // Очищаем список
   columnsList.innerHTML = '';
 
-  // Создаем отсортированный список колонок
   const orderedColumns = [];
 
-  // Сначала в порядке из настроек
   columnSettings.order.forEach(colId => {
     const col = allColumns.find(c => c.id === colId);
     if (col) orderedColumns.push(col);
   });
 
-  // Добавляем новые колонки
   allColumns.forEach(col => {
     if (!orderedColumns.find(c => c.id === col.id)) {
       orderedColumns.push(col);
     }
   });
 
-  // Создаем элементы для каждой колонки
   orderedColumns.forEach((col, index) => {
     const isHidden = columnSettings.hidden.includes(col.id);
 
@@ -167,15 +378,12 @@ function openColumnSettings() {
       <label for="col-${col.id}">${col.name}</label>
     `;
 
-    // Обработчик изменения чекбокса
     const checkbox = item.querySelector('input[type="checkbox"]');
     checkbox.addEventListener('change', (e) => {
       if (e.target.checked) {
-        // Показываем колонку
         columnSettings.hidden = columnSettings.hidden.filter(id => id !== col.id);
         item.classList.remove('disabled');
       } else {
-        // Скрываем колонку
         if (!columnSettings.hidden.includes(col.id)) {
           columnSettings.hidden.push(col.id);
         }
@@ -184,7 +392,6 @@ function openColumnSettings() {
       applyColumnSettings();
     });
 
-    // Drag and Drop обработчики
     item.addEventListener('dragstart', handleDragStart);
     item.addEventListener('dragend', handleDragEnd);
     item.addEventListener('dragover', handleDragOver);
@@ -197,25 +404,20 @@ function openColumnSettings() {
   modal.style.display = 'flex';
 }
 
-// Закрытие модального окна
 function closeColumnSettings() {
   const modal = document.getElementById('column-settings-modal');
   modal.style.display = 'none';
 }
 
-// Сброс настроек колонок
 function resetColumnSettings() {
   if (confirm('Вы уверены, что хотите сбросить настройки колонок?')) {
     columnSettings = { order: [], hidden: [] };
     saveColumnSettings();
-
-    // Перезагружаем таблицу
     loadData();
     closeColumnSettings();
   }
 }
 
-// Drag and Drop обработчики
 let draggedElement = null;
 
 function handleDragStart(e) {
@@ -228,12 +430,10 @@ function handleDragStart(e) {
 function handleDragEnd(e) {
   this.classList.remove('dragging');
 
-  // Убираем класс drag-over со всех элементов
   document.querySelectorAll('.column-item').forEach(item => {
     item.classList.remove('drag-over');
   });
 
-  // Обновляем порядок в настройках
   const columnsList = document.getElementById('columns-list');
   const newOrder = [];
   columnsList.querySelectorAll('.column-item').forEach(item => {
@@ -285,7 +485,6 @@ function handleDragLeave(e) {
   this.classList.remove('drag-over');
 }
 
-// Синхронизация ширины колонок между заголовком и телом таблицы
 function syncColumnWidths() {
   const headerTable = document.querySelector('.table-header-wrapper table');
   const bodyTable = document.querySelector('.table-body-wrapper table');
@@ -299,7 +498,6 @@ function syncColumnWidths() {
 
   const bodyCells = bodyRows[0].querySelectorAll('td');
 
-  // Сначала сбрасываем все ширины
   headerCells.forEach(cell => {
     cell.style.width = '';
     cell.style.minWidth = '';
@@ -312,15 +510,12 @@ function syncColumnWidths() {
     cell.style.maxWidth = '';
   });
 
-  // Даём браузеру время пересчитать layout
   requestAnimationFrame(() => {
-    // Получаем реальные ширины колонок из tbody
     const widths = [];
     bodyCells.forEach(cell => {
       widths.push(cell.offsetWidth);
     });
 
-    // Применяем эти ширины к обеим таблицам
     headerCells.forEach((cell, index) => {
       if (widths[index]) {
         const width = widths[index] + 'px';
@@ -339,7 +534,6 @@ function syncColumnWidths() {
       }
     });
 
-    // Синхронизируем общую ширину таблиц
     const bodyTableWidth = bodyTable.offsetWidth;
     headerTable.style.width = bodyTableWidth + 'px';
   });
@@ -347,9 +541,8 @@ function syncColumnWidths() {
 
 function getParams() {
   const p = new URLSearchParams();
-  p.set("page", state.page);
-  // Если выбрано "Все", устанавливаем очень большое значение per_page
-  p.set("per_page", state.showAll ? 999999 : state.per_page);
+  p.set("page", 1);
+  p.set("per_page", 999999);
   if (state.q) p.set("q", state.q);
   if (state.gender) p.set("gender", state.gender);
   if (state.department) p.set("department", state.department);
@@ -381,6 +574,12 @@ async function loadData() {
     state.batch = data.batch;
   }
 
+  // НОВОЕ: Сохраняем информацию о ключевых показателях
+  testKeyIndicators = data.test_key_indicators || {};
+
+  // Сохраняем rulesMap глобально для использования в renderTable
+  window.rulesMapGlobal = data.rules_map || {};
+
   const gSel = document.getElementById("gender");
   const dSel = document.getElementById("department");
   if (gSel.options.length === 1) {
@@ -389,7 +588,6 @@ async function loadData() {
       o.value = g;
       o.textContent = g;
       gSel.appendChild(o);
-      console.log("Добавлен пол:", g); // Для отладки
     });
   }
   if (dSel.options.length === 1) {
@@ -398,35 +596,57 @@ async function loadData() {
       o.value = d;
       o.textContent = d;
       dSel.appendChild(o);
-      console.log("Добавлено отделение:", d); // Для отладки
     });
   }
-
-  const batchInfo = state.batch ? ` (файл: ${state.batch})` : '';
-  meta.textContent = `Найдено: ${data.total}. Страница ${data.page}.${batchInfo}`;
 
   const testColumns = data.test_columns || [];
   const rulesMap = data.rules_map || {};
 
   const headerRow = document.getElementById("table-header");
 
-  // Очищаем старые динамические колонки
   const existingDynamicCols = headerRow.querySelectorAll('.dynamic-test-col');
   existingDynamicCols.forEach(col => col.remove());
 
-  // Добавляем новые колонки перед последней колонкой "Результат (полный)"
   const lastTh = headerRow.querySelector('th[data-column-id="full_result"]');
   testColumns.forEach(testName => {
     const th = document.createElement("th");
-    th.textContent = testName;
     th.className = "dynamic-test-col";
     th.setAttribute('data-column-id', `test_${testName}`);
+
+    // НОВОЕ: Добавляем иконку фильтра если есть ключевой показатель
+    if (testKeyIndicators[testName]) {
+      const filterIcon = document.createElement('span');
+      filterIcon.className = 'filter-icon';
+      filterIcon.textContent = '▼';
+      filterIcon.title = 'Фильтр';
+
+      // Проверяем активен ли фильтр
+      if (state.testFilters[testName] && state.testFilters[testName].length > 0) {
+        filterIcon.classList.add('filter-active');
+      }
+
+      filterIcon.addEventListener('click', (e) => openTestFilter(testName, e));
+
+      th.innerHTML = `${testName} `;
+      th.appendChild(filterIcon);
+    } else {
+      th.textContent = testName;
+    }
+
     headerRow.insertBefore(th, lastTh);
   });
 
-  // Проверяем, есть ли хотя бы одна запись с непустым filtered text
+  // Сохраняем все записи
+  allRecords = data.items;
+
+  // Рендерим таблицу
+  renderTable();
+
+  // Обновляем панель активных фильтров
+  updateActiveFiltersPanel();
+
   let hasUnparsedResults = false;
-  data.items.forEach(item => {
+  allRecords.forEach(item => {
     const rawText = item.results?.raw_text ?? "";
     const tests = item.results?.tests || [];
     let filteredText = rawText;
@@ -469,20 +689,52 @@ async function loadData() {
     }
   });
 
-  // Скрываем/показываем колонку "Результат (полный)"
   if (hasUnparsedResults) {
     lastTh.style.display = '';
   } else {
     lastTh.style.display = 'none';
   }
 
-  // Применяем настройки колонок
   applyColumnSettings();
 
-  // Заполняем таблицу
+  const headerWrapper = document.querySelector('.table-header-wrapper');
+  const bodyWrapper = document.querySelector('.table-body-wrapper');
+
+  if (headerWrapper && bodyWrapper) {
+    bodyWrapper.addEventListener('scroll', () => {
+      headerWrapper.scrollLeft = bodyWrapper.scrollLeft;
+    });
+  }
+
+  syncColumnWidths();
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      syncColumnWidths();
+    }, 100);
+  });
+
+  const batchInfo = state.batch ? ` (файл: ${state.batch})` : '';
+  meta.textContent = `Найдено: ${allRecords.length}. ${batchInfo}`;
+}
+
+// НОВОЕ: Рендеринг таблицы с учётом фильтров и пагинации
+function renderTable() {
+  // Применяем фильтры по анализам
+  let filtered = filterRecordsByTests(allRecords);
+
+  const total = filtered.length;
+  const start = (state.page - 1) * (state.showAll ? total : state.per_page);
+  const end = state.showAll ? total : start + state.per_page;
+  const items = filtered.slice(start, end);
+
+  const testColumns = Object.keys(testKeyIndicators);
   const tbody = document.querySelector("#records tbody");
   tbody.innerHTML = "";
-  data.items.forEach(item => {
+
+  items.forEach(item => {
     const tr = document.createElement("tr");
     const p = item.patient;
     const fio = [p.last_name, p.first_name, p.middle_name].filter(Boolean).join(" ");
@@ -511,6 +763,8 @@ async function loadData() {
     for (const defId in testsByDefinition) {
       const indicators = testsByDefinition[defId];
       const testName = indicators[0].name.split('-')[0];
+
+      // Показываем ВСЕ значения показателей
       const values = indicators.map(ind => ind.value).filter(Boolean);
 
       if (testValues[testName] !== undefined) {
@@ -518,6 +772,7 @@ async function loadData() {
       }
     }
 
+    // Получаем rulesMap из глобального контекста (нужно его сохранить при загрузке)
     let filteredText = rawText;
 
     const parsedDefinitions = {};
@@ -529,11 +784,12 @@ async function loadData() {
       parsedDefinitions[defId].push(test);
     });
 
+    // Используем ту же логику что была в оригинале
     for (const defId in parsedDefinitions) {
       const indicators = parsedDefinitions[defId];
       indicators.forEach(test => {
         const ruleId = test.rule_id;
-        const rule = rulesMap[ruleId];
+        const rule = window.rulesMapGlobal ? window.rulesMapGlobal[ruleId] : null;
         if (rule && rule.test_pattern) {
           const exactPattern = rule.test_pattern.replace(rule.variable_part, test.raw_value);
           filteredText = filteredText.replace(exactPattern + ';', '');
@@ -542,12 +798,9 @@ async function loadData() {
       });
     }
 
-    filteredText = filteredText.replace(/:\s*[;,\s]*(?=(?:Определение|Исследование|Выявление|Анализ|$))/gi, ': ');
-    filteredText = filteredText.replace(
-      /(?:Определение|Исследование|Выявление|Анализ)[^:]+:\s*(?=(?:Определение|Исследование|Выявление|Анализ|$))/gi,
-      ''
-    );
     filteredText = filteredText
+      .replace(/:\s*[;,\s]*(?=(?:Определение|Исследование|Выявление|Анализ|$))/gi, ': ')
+      .replace(/(?:Определение|Исследование|Выявление|Анализ)[^:]+:\s*(?=(?:Определение|Исследование|Выявление|Анализ|$))/gi, '')
       .replace(/\s+/g, ' ')
       .replace(/,\s*,/g, ',')
       .replace(/^[,;\s]+/g, '')
@@ -580,8 +833,6 @@ async function loadData() {
       testColumnsCells += `<td data-column-id="test_${testName}">${cellContent}</td>`;
     });
 
-    const resultCellStyle = hasUnparsedResults ? '' : 'style="display:none;"';
-
     tr.innerHTML = `
       <td data-column-id="row_number">${item.row_id ?? item.id}</td>
       <td data-column-id="fio"><a href="${detailUrl}" target="_blank">${fio}</a></td>
@@ -591,53 +842,23 @@ async function loadData() {
       <td data-column-id="sample_id">${item.sample_id ?? ""}</td>
       <td data-column-id="department">${item.department ?? ""}</td>
       ${testColumnsCells}
-      <td class="result-cell" data-column-id="full_result" ${resultCellStyle}>${resultCell}</td>
+      <td class="result-cell" data-column-id="full_result">${resultCell}</td>
     `;
     tbody.appendChild(tr);
   });
 
-  // Применяем настройки колонок к ячейкам
   applyColumnSettings();
 
-  // Синхронизация горизонтальной прокрутки между header и body
-  const headerWrapper = document.querySelector('.table-header-wrapper');
-  const bodyWrapper = document.querySelector('.table-body-wrapper');
-
-  if (headerWrapper && bodyWrapper) {
-    bodyWrapper.addEventListener('scroll', () => {
-      headerWrapper.scrollLeft = bodyWrapper.scrollLeft;
-    });
-  }
-
-  // Синхронизация ширины колонок
-  syncColumnWidths();
-
-  // Пересинхронизация при изменении размера окна
-  let resizeTimer;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      syncColumnWidths();
-    }, 100);
-  });
-
-  // Добавляем обработчик клика на строки для раскрытия/сворачивания
   tbody.querySelectorAll('tr').forEach(tr => {
     tr.addEventListener('click', (e) => {
-      // Не раскрываем если кликнули по ссылке
       if (e.target.tagName === 'A' || e.target.closest('a')) {
         return;
       }
-
-      // Переключаем класс expanded
       tr.classList.toggle('expanded');
-
-      // Пересинхронизируем ширину колонок после изменения высоты строк
       setTimeout(() => syncColumnWidths(), 50);
     });
   });
 
-  // Добавляем обработчики для раскрытия/свертывания результатов
   tbody.querySelectorAll('.expand-link').forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
@@ -657,32 +878,31 @@ async function loadData() {
   });
 
   // Пагинация
-  const start = (data.page - 1) * data.per_page + 1;
-  const end = Math.min(data.page * data.per_page, data.total);
-  const totalPages = Math.ceil(data.total / data.per_page);
+  const totalPages = Math.ceil(total / state.per_page);
+  const endItem = Math.min(end, total);
 
-  // Обновляем информацию о записях
   let pageInfoText;
   if (state.showAll) {
-    pageInfoText = data.total ? `Все ${data.total}` : "0";
+    pageInfoText = total ? `Все ${total}` : "0";
   } else {
-    pageInfoText = data.total ? `${start}–${end} из ${data.total}` : "0";
+    pageInfoText = total ? `${start + 1}–${endItem} из ${total}` : "0";
   }
   document.getElementById("pageinfo-top").textContent = pageInfoText;
 
-  const disablePrev = data.page <= 1;
-  const disableNext = end >= data.total;
+  const disablePrev = state.page <= 1;
+  const disableNext = endItem >= total;
 
   document.getElementById("prev-top").disabled = disablePrev || state.showAll;
   document.getElementById("next-top").disabled = disableNext || state.showAll;
 
-  // Скрываем пагинацию если выбрано "Все"
   if (state.showAll) {
     document.getElementById("page-numbers-top").style.display = 'none';
   } else {
     document.getElementById("page-numbers-top").style.display = 'flex';
-    renderPageNumbers("top", data.page, totalPages);
+    renderPageNumbers("top", state.page, totalPages);
   }
+
+  syncColumnWidths();
 }
 
 function renderPageNumbers(position, currentPage, totalPages) {
@@ -728,7 +948,7 @@ function addPageButton(container, pageNum, currentPage) {
   btn.disabled = pageNum === currentPage;
   btn.addEventListener("click", () => {
     state.page = pageNum;
-    loadData();
+    renderTable();
   });
   container.appendChild(btn);
 }
@@ -756,7 +976,6 @@ function initTable() {
     }
   }
 
-  // Загружаем настройки колонок
   loadColumnSettings();
 
   const perPageTop = document.getElementById("per-page-top");
@@ -768,14 +987,14 @@ function initTable() {
 
     if (value === 'all') {
       state.showAll = true;
-      state.page = 1;  // Сбрасываем на первую страницу
+      state.page = 1;
     } else {
       state.showAll = false;
       state.per_page = parseInt(value);
       state.page = 1;
     }
 
-    loadData();
+    renderTable();
   });
 
   document.getElementById("apply").addEventListener("click", () => {
@@ -783,7 +1002,6 @@ function initTable() {
     state.gender = document.getElementById("gender").value;
     state.department = document.getElementById("department").value;
     state.page = 1;
-    console.log("Применение фильтров:", state); // Для отладки
     loadData();
   });
 
@@ -792,38 +1010,34 @@ function initTable() {
     document.getElementById("gender").value = "";
     document.getElementById("department").value = "";
     state.q = state.gender = state.department = "";
+    state.testFilters = {};
     state.page = 1;
     loadData();
   });
 
-  // Кнопки пагинации
   document.getElementById("prev-top").addEventListener("click", () => {
     if (state.page > 1) {
       state.page--;
-      loadData();
+      renderTable();
     }
   });
 
   document.getElementById("next-top").addEventListener("click", () => {
     state.page++;
-    loadData();
+    renderTable();
   });
 
-  // Управление колонками
   document.getElementById("column-settings-btn").addEventListener("click", openColumnSettings);
   document.getElementById("close-modal-btn").addEventListener("click", closeColumnSettings);
   document.getElementById("reset-columns-btn").addEventListener("click", resetColumnSettings);
 
-  // Закрытие модального окна по клику вне его
   document.getElementById("column-settings-modal").addEventListener("click", (e) => {
     if (e.target.id === "column-settings-modal") {
       closeColumnSettings();
     }
   });
 
-  // Первичная загрузка
   loadData();
 }
 
-// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', initTable);
