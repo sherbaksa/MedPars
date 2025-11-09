@@ -216,6 +216,7 @@ def records():
     Применяет правила парсинга если они есть.
     """
     page = max(int(request.args.get("page", 1)), 1)
+    # Убираем ограничение в 100, теперь максимум 1000000 (практически без ограничений)
     per_page = min(max(int(request.args.get("per_page", 20)), 1), 1000000)
 
     q = request.args.get("q")
@@ -289,21 +290,32 @@ def records():
     # простые фильтры
     def _match(item):
         ok = True
+        p = item.get("patient", {})
+
         if q:
             ql = q.lower()
-            p = item["patient"]
             ok = ok and (
                     (p.get("last_name") or "").lower().find(ql) >= 0
                     or (p.get("first_name") or "").lower().find(ql) >= 0
                     or (p.get("middle_name") or "").lower().find(ql) >= 0
                     or (item.get("sample_id") or "").lower().find(ql) >= 0
                     or (item.get("department") or "").lower().find(ql) >= 0
-                    or (item["results"].get("summary") or "").lower().find(ql) >= 0
+                    or (item.get("results", {}).get("summary") or "").lower().find(ql) >= 0
             )
         if gender:
-            ok = ok and (p.get("gender") == gender)
+            patient_gender = p.get("gender")
+            match = patient_gender == gender
+            # Отладка
+            if not match and patient_gender:
+                print(f"Не совпало: '{patient_gender}' != '{gender}'")
+            ok = ok and match
         if department:
-            ok = ok and (item.get("department") == department)
+            item_dept = item.get("department")
+            match = item_dept == department
+            # Отладка
+            if not match and item_dept:
+                print(f"Не совпало отделение: '{item_dept}' != '{department}'")
+            ok = ok and match
         return ok
 
     filtered = [x for x in data if _match(x)]

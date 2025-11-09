@@ -358,7 +358,8 @@ function getParams() {
 }
 
 async function loadData() {
-  const res = await fetch(`/api/records?${getParams().toString()}`);
+  const params = getParams();
+  const res = await fetch(`/api/records?${params.toString()}`);
   const data = await res.json();
 
   const meta = document.getElementById("meta");
@@ -388,6 +389,7 @@ async function loadData() {
       o.value = g;
       o.textContent = g;
       gSel.appendChild(o);
+      console.log("Добавлен пол:", g); // Для отладки
     });
   }
   if (dSel.options.length === 1) {
@@ -396,6 +398,7 @@ async function loadData() {
       o.value = d;
       o.textContent = d;
       dSel.appendChild(o);
+      console.log("Добавлено отделение:", d); // Для отладки
     });
   }
 
@@ -780,6 +783,7 @@ function initTable() {
     state.gender = document.getElementById("gender").value;
     state.department = document.getElementById("department").value;
     state.page = 1;
+    console.log("Применение фильтров:", state); // Для отладки
     loadData();
   });
 
