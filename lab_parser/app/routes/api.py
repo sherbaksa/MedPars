@@ -216,7 +216,7 @@ def records():
     Применяет правила парсинга если они есть.
     """
     page = max(int(request.args.get("page", 1)), 1)
-    per_page = min(max(int(request.args.get("per_page", 20)), 1), 100)
+    per_page = min(max(int(request.args.get("per_page", 20)), 1), 1000000)
 
     q = request.args.get("q")
     gender = request.args.get("gender")

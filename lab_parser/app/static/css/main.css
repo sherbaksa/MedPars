@@ -329,8 +329,20 @@ th:nth-child(5), td:nth-child(5) { /* ДР */
 }
 
 th:nth-child(2), td:nth-child(2) { /* ФИО */
-  min-width: 180px;
-  max-width: 250px;
+  min-width: 200px;
+  width: 200px;
+}
+
+/* Когда строка раскрыта, ячейки с текстом показывают все содержимое */
+tr.expanded td {
+  white-space: normal !important;
+  word-wrap: break-word !important;
+  height: auto !important;
+}
+
+/* Индикатор что строка кликабельна */
+tbody tr {
+  cursor: pointer;
 }
 
 th:nth-child(6), td:nth-child(6) { /* Идентификатор */
@@ -779,6 +791,7 @@ code {
   min-width: 800px;
   border-collapse: collapse;
   background: var(--bg-white);
+  table-layout: fixed;
 }
 
 /* ========== Управление колонками ========== */

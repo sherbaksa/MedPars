@@ -285,11 +285,71 @@ function handleDragLeave(e) {
   this.classList.remove('drag-over');
 }
 
+// Синхронизация ширины колонок между заголовком и телом таблицы
+function syncColumnWidths() {
+  const headerTable = document.querySelector('.table-header-wrapper table');
+  const bodyTable = document.querySelector('.table-body-wrapper table');
+
+  if (!headerTable || !bodyTable) return;
+
+  const headerCells = headerTable.querySelectorAll('thead th');
+  const bodyRows = bodyTable.querySelectorAll('tbody tr');
+
+  if (bodyRows.length === 0) return;
+
+  const bodyCells = bodyRows[0].querySelectorAll('td');
+
+  // Сначала сбрасываем все ширины
+  headerCells.forEach(cell => {
+    cell.style.width = '';
+    cell.style.minWidth = '';
+    cell.style.maxWidth = '';
+  });
+
+  bodyCells.forEach(cell => {
+    cell.style.width = '';
+    cell.style.minWidth = '';
+    cell.style.maxWidth = '';
+  });
+
+  // Даём браузеру время пересчитать layout
+  requestAnimationFrame(() => {
+    // Получаем реальные ширины колонок из tbody
+    const widths = [];
+    bodyCells.forEach(cell => {
+      widths.push(cell.offsetWidth);
+    });
+
+    // Применяем эти ширины к обеим таблицам
+    headerCells.forEach((cell, index) => {
+      if (widths[index]) {
+        const width = widths[index] + 'px';
+        cell.style.width = width;
+        cell.style.minWidth = width;
+        cell.style.maxWidth = width;
+      }
+    });
+
+    bodyCells.forEach((cell, index) => {
+      if (widths[index]) {
+        const width = widths[index] + 'px';
+        cell.style.width = width;
+        cell.style.minWidth = width;
+        cell.style.maxWidth = width;
+      }
+    });
+
+    // Синхронизируем общую ширину таблиц
+    const bodyTableWidth = bodyTable.offsetWidth;
+    headerTable.style.width = bodyTableWidth + 'px';
+  });
+}
+
 function getParams() {
   const p = new URLSearchParams();
   p.set("page", state.page);
-  // Если выбрано "Все", устанавливаем большое значение per_page
-  p.set("per_page", state.showAll ? 10000 : state.per_page);
+  // Если выбрано "Все", устанавливаем очень большое значение per_page
+  p.set("per_page", state.showAll ? 999999 : state.per_page);
   if (state.q) p.set("q", state.q);
   if (state.gender) p.set("gender", state.gender);
   if (state.department) p.set("department", state.department);
@@ -545,6 +605,34 @@ async function loadData() {
       headerWrapper.scrollLeft = bodyWrapper.scrollLeft;
     });
   }
+
+  // Синхронизация ширины колонок
+  syncColumnWidths();
+
+  // Пересинхронизация при изменении размера окна
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      syncColumnWidths();
+    }, 100);
+  });
+
+  // Добавляем обработчик клика на строки для раскрытия/сворачивания
+  tbody.querySelectorAll('tr').forEach(tr => {
+    tr.addEventListener('click', (e) => {
+      // Не раскрываем если кликнули по ссылке
+      if (e.target.tagName === 'A' || e.target.closest('a')) {
+        return;
+      }
+
+      // Переключаем класс expanded
+      tr.classList.toggle('expanded');
+
+      // Пересинхронизируем ширину колонок после изменения высоты строк
+      setTimeout(() => syncColumnWidths(), 50);
+    });
+  });
 
   // Добавляем обработчики для раскрытия/свертывания результатов
   tbody.querySelectorAll('.expand-link').forEach(link => {
