@@ -613,6 +613,9 @@ async function loadData() {
     th.className = "dynamic-test-col";
     th.setAttribute('data-column-id', `test_${testName}`);
 
+    // НОВОЕ: Добавляем подсказку к заголовку
+    let tooltipText = testName;
+
     // НОВОЕ: Добавляем иконку фильтра если есть ключевой показатель
     if (testKeyIndicators[testName]) {
       const filterIcon = document.createElement('span');
@@ -623,6 +626,8 @@ async function loadData() {
       // Проверяем активен ли фильтр
       if (state.testFilters[testName] && state.testFilters[testName].length > 0) {
         filterIcon.classList.add('filter-active');
+        // Добавляем в подсказку информацию о фильтре
+        tooltipText += '\nФильтр: ' + state.testFilters[testName].join(', ');
       }
 
       filterIcon.addEventListener('click', (e) => openTestFilter(testName, e));
@@ -633,18 +638,19 @@ async function loadData() {
       th.textContent = testName;
     }
 
+    // Устанавливаем подсказку
+    th.title = tooltipText;
+
     headerRow.insertBefore(th, lastTh);
   });
 
   // Сохраняем все записи
   allRecords = data.items;
 
-  // Рендерим таблицу
-  renderTable();
+  // НОВОЕ: Сохраняем rulesMap глобально
+  window.rulesMapGlobal = rulesMap;
 
-  // Обновляем панель активных фильтров
-  updateActiveFiltersPanel();
-
+  // Проверяем есть ли непарсенные результаты
   let hasUnparsedResults = false;
   allRecords.forEach(item => {
     const rawText = item.results?.raw_text ?? "";
@@ -689,11 +695,18 @@ async function loadData() {
     }
   });
 
+  // Скрываем/показываем колонку "Результат (полный)"
   if (hasUnparsedResults) {
     lastTh.style.display = '';
   } else {
     lastTh.style.display = 'none';
   }
+
+  // Сохраняем флаг глобально для использования в renderTable
+  window.hasUnparsedResultsGlobal = hasUnparsedResults;
+
+  // Рендерим таблицу
+  renderTable();
 
   applyColumnSettings();
 
@@ -833,6 +846,9 @@ function renderTable() {
       testColumnsCells += `<td data-column-id="test_${testName}">${cellContent}</td>`;
     });
 
+    // ИСПРАВЛЕНИЕ: Применяем флаг hasUnparsedResults к колонке
+    const resultCellStyle = window.hasUnparsedResultsGlobal ? '' : 'style="display:none;"';
+
     tr.innerHTML = `
       <td data-column-id="row_number">${item.row_id ?? item.id}</td>
       <td data-column-id="fio"><a href="${detailUrl}" target="_blank">${fio}</a></td>
@@ -842,7 +858,7 @@ function renderTable() {
       <td data-column-id="sample_id">${item.sample_id ?? ""}</td>
       <td data-column-id="department">${item.department ?? ""}</td>
       ${testColumnsCells}
-      <td class="result-cell" data-column-id="full_result">${resultCell}</td>
+      <td class="result-cell" data-column-id="full_result" ${resultCellStyle}>${resultCell}</td>
     `;
     tbody.appendChild(tr);
   });

@@ -31,7 +31,7 @@ body {
 }
 
 .container {
-  max-width: 1400px;
+/*  max-width: 1400px; */
   margin: 0 auto;
   padding: 0 24px;
 }
@@ -1270,4 +1270,471 @@ th, td {
   .filter-clear-all {
     width: 100%;
   }
+}
+/* ========== Фильтры по анализам ========== */
+
+/* ВРЕМЕННО: Вертикальные границы для отладки */
+th, td {
+  border-left: 1px solid #ccc !important;
+  border-right: 1px solid #ccc !important;
+}
+
+/* ИСПРАВЛЕНИЕ: Фиксированная ширина для колонок анализов */
+th.dynamic-test-col,
+td[data-column-id^="test_"] {
+  min-width: 90px !important;
+  width: 90px !important;
+  max-width: 90px !important;
+}
+
+/* Возвращаем table-layout: fixed */
+.table-header-wrapper table,
+.table-body-wrapper table {
+  table-layout: fixed !important;
+}
+
+/* Заголовок с фильтром - запрещаем перенос текста */
+.dynamic-test-col {
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+/* Иконка фильтра в заголовке колонки */
+.filter-icon {
+  display: inline-block;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+  margin-left: 2px;
+  user-select: none;
+  vertical-align: middle;
+}
+
+.filter-icon:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  transform: scale(1.15);
+}
+
+.filter-icon.filter-active {
+  color: #00e5ff;
+  background: rgba(255, 255, 255, 0.25);
+  font-weight: bold;
+}
+
+/* Выпадающее меню фильтра */
+.test-filter-menu {
+  background: var(--bg-white);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg);
+  padding: 16px;
+  min-width: 250px;
+  max-width: 350px;
+  z-index: 1000;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filter-menu-header {
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 2px solid var(--primary-blue-light);
+}
+
+.filter-menu-header strong {
+  color: var(--primary-blue-dark);
+  font-size: 15px;
+}
+
+.filter-menu-header small {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* Список значений фильтра */
+.filter-values-list {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 8px 0;
+  margin-bottom: 12px;
+}
+
+.filter-values-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.filter-values-list::-webkit-scrollbar-track {
+  background: var(--bg-gray);
+  border-radius: 4px;
+}
+
+.filter-values-list::-webkit-scrollbar-thumb {
+  background: var(--primary-blue);
+  border-radius: 4px;
+}
+
+.filter-value-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.filter-value-item:hover {
+  background: var(--primary-blue-light);
+}
+
+.filter-value-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary-blue);
+  margin: 0;
+}
+
+/* Кнопки в меню фильтра */
+.filter-menu-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.filter-btn-small {
+  padding: 6px 12px;
+  font-size: 13px;
+  background: var(--bg-gray);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.filter-btn-small:hover {
+  background: #e0e5eb;
+  transform: translateY(-1px);
+}
+
+.filter-btn-primary {
+  padding: 6px 16px;
+  font-size: 13px;
+  background: var(--primary-blue);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.filter-btn-primary:hover {
+  background: var(--primary-blue-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Панель активных фильтров */
+.active-filters-panel {
+  background: linear-gradient(135deg, #e7f6ec 0%, #d4f1e3 100%);
+  border-left: 4px solid var(--accent-green);
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  animation: slideIn 0.3s ease;
+}
+
+.active-filters-panel strong {
+  color: var(--text-primary);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.filter-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-white);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  animation: fadeIn 0.2s ease;
+}
+
+.filter-tag-close {
+  cursor: pointer;
+  font-weight: bold;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 4px;
+  transition: all 0.2s ease;
+}
+
+.filter-tag-close:hover {
+  color: #e74c3c;
+  transform: scale(1.2);
+}
+
+.filter-clear-all {
+  padding: 6px 14px;
+  font-size: 13px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+
+.filter-clear-all:hover {
+  background: #c0392b;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+  .test-filter-menu {
+    left: 10px !important;
+    right: 10px;
+    width: auto;
+    max-width: calc(100vw - 20px);
+  }
+
+  .filter-menu-actions {
+    flex-direction: column;
+  }
+
+  .filter-menu-actions button {
+    width: 100%;
+  }
+
+  .active-filters-panel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-tags {
+    width: 100%;
+  }
+
+  .filter-clear-all {
+    width: 100%;
+  }
+}
+/* ========== АЛЬТЕРНАТИВНЫЙ ПОДХОД: Одна таблица со sticky header ========== */
+
+/* Контейнер таблицы - расширяется на всю ширину */
+.content-card {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* Убираем разделение на две таблицы */
+.table-wrapper {
+  margin: 20px -28px;
+  padding: 0;
+  position: relative;
+  border-radius: 8px;
+  max-height: calc(100vh - 240px);
+  min-height: 400px;
+  overflow: auto;
+  width: calc(100% + 56px) !important;
+}
+
+/* Отключаем старые wrapper'ы */
+.table-header-wrapper {
+  display: none !important;
+}
+
+.table-body-wrapper {
+  overflow: visible !important;
+  padding: 0 28px;
+  flex: none !important;
+  width: 100%;
+}
+
+/* Основная таблица - растягиваем на всю ширину */
+.table-body-wrapper table {
+  width: 100% !important;
+  min-width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-white);
+  table-layout: auto;
+}
+
+/* Фиксированный заголовок */
+.table-body-wrapper table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table-body-wrapper table thead th {
+  position: sticky;
+  top: 0;
+  background: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 14px 8px;
+  font-size: 11px;
+  max-width: 150px;
+}
+
+/* Тень под заголовком */
+.table-body-wrapper table thead::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 6px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.15), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ВРЕМЕННО: Вертикальные границы для отладки */
+.table-body-wrapper th,
+.table-body-wrapper td {
+  border-left: 1px solid #ccc !important;
+  border-right: 1px solid #ccc !important;
+}
+
+/* Колонки адаптивные */
+.table-body-wrapper th,
+.table-body-wrapper td {
+  padding: 12px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Минимальные ширины для разных типов колонок */
+.table-body-wrapper th[data-column-id="row_number"],
+.table-body-wrapper td[data-column-id="row_number"] {
+  width: 50px;
+  min-width: 50px;
+}
+
+.table-body-wrapper th[data-column-id="fio"],
+.table-body-wrapper td[data-column-id="fio"] {
+  min-width: 200px;
+}
+
+.table-body-wrapper th[data-column-id="gender"],
+.table-body-wrapper td[data-column-id="gender"] {
+  width: 60px;
+  min-width: 60px;
+}
+
+.table-body-wrapper th[data-column-id="age"],
+.table-body-wrapper td[data-column-id="age"] {
+  width: 70px;
+  min-width: 70px;
+}
+
+.table-body-wrapper th[data-column-id="birth_date"],
+.table-body-wrapper td[data-column-id="birth_date"] {
+  width: 100px;
+  min-width: 100px;
+}
+
+.table-body-wrapper th[data-column-id="sample_id"],
+.table-body-wrapper td[data-column-id="sample_id"] {
+  min-width: 100px;
+}
+
+.table-body-wrapper th[data-column-id="department"],
+.table-body-wrapper td[data-column-id="department"] {
+  min-width: 150px;
+}
+
+/* Колонки анализов */
+.table-body-wrapper th.dynamic-test-col,
+.table-body-wrapper td[data-column-id^="test_"] {
+  min-width: 80px;
+  width: auto;
+}
+
+.table-body-wrapper th[data-column-id="full_result"],
+.table-body-wrapper td[data-column-id="full_result"] {
+  min-width: 200px;
+  max-width: 400px;
+  white-space: normal;
+}
+
+/* Тултип при наведении на заголовок */
+.table-body-wrapper th {
+  position: relative;
+  cursor: help;
+}
+
+/* Стилизация скроллбара для wrapper */
+.table-wrapper::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: var(--bg-gray);
+  border-radius: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: var(--primary-blue);
+  border-radius: 6px;
+  border: 2px solid var(--bg-gray);
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-blue-dark);
+}
+
+.table-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-blue) var(--bg-gray);
 }
