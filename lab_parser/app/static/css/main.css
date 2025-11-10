@@ -997,40 +997,56 @@ code {
   }
 }
 /* ========== Фильтры по анализам ========== */
-/* ========== Фильтры по анализам ========== */
 
 /* ВРЕМЕННО: Вертикальные границы для отладки */
 th, td {
   border-left: 1px solid #ccc !important;
   border-right: 1px solid #ccc !important;
 }
+
+/* ИСПРАВЛЕНИЕ: Фиксированная ширина для колонок анализов */
+th.dynamic-test-col,
+td[data-column-id^="test_"] {
+  min-width: 90px !important;
+  width: 90px !important;
+  max-width: 90px !important;
+}
+
+/* Возвращаем table-layout: fixed */
+.table-header-wrapper table,
+.table-body-wrapper table {
+  table-layout: fixed !important;
+}
+
 /* Заголовок с фильтром - запрещаем перенос текста */
 .dynamic-test-col {
   white-space: nowrap !important;
   overflow: visible !important;
 }
+
 /* Иконка фильтра в заголовке колонки */
 .filter-icon {
   display: inline-block;
-  font-size: 12px;
-  color: var(--text-secondary);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 4px;
+  border-radius: 3px;
   transition: all 0.2s ease;
-  margin-left: 4px;
+  margin-left: 2px;
   user-select: none;
+  vertical-align: middle;
 }
 
 .filter-icon:hover {
   background: rgba(255, 255, 255, 0.2);
   color: white;
-  transform: scale(1.1);
+  transform: scale(1.15);
 }
 
 .filter-icon.filter-active {
-  color: var(--accent-teal);
-  background: rgba(255, 255, 255, 0.3);
+  color: #00e5ff;
+  background: rgba(255, 255, 255, 0.25);
   font-weight: bold;
 }
 
@@ -1118,6 +1134,12 @@ th, td {
   cursor: pointer;
   accent-color: var(--primary-blue);
   margin: 0;
+}
+
+.filter-value-count {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-left: 4px;
 }
 
 /* Кнопки в меню фильтра */
@@ -1235,6 +1257,42 @@ th, td {
   white-space: nowrap;
 }
 
+.filter-clear-all:hover {
+  background: #c0392b;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+  .test-filter-menu {
+    left: 10px !important;
+    right: 10px;
+    width: auto;
+    max-width: calc(100vw - 20px);
+  }
+
+  .filter-menu-actions {
+    flex-direction: column;
+  }
+
+  .filter-menu-actions button {
+    width: 100%;
+  }
+
+  .active-filters-panel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-tags {
+    width: 100%;
+  }
+
+  .filter-clear-all {
+    width: 100%;
+  }
+}
 .filter-clear-all:hover {
   background: #c0392b;
   transform: translateY(-1px);
@@ -1564,12 +1622,6 @@ td[data-column-id^="test_"] {
 }
 /* ========== АЛЬТЕРНАТИВНЫЙ ПОДХОД: Одна таблица со sticky header ========== */
 
-/* Контейнер таблицы - расширяется на всю ширину */
-.content-card {
-  max-width: 100% !important;
-  width: 100% !important;
-}
-
 /* Убираем разделение на две таблицы */
 .table-wrapper {
   margin: 20px -28px;
@@ -1579,7 +1631,7 @@ td[data-column-id^="test_"] {
   max-height: calc(100vh - 240px);
   min-height: 400px;
   overflow: auto;
-  width: calc(100% + 56px) !important;
+  width: calc(100% + 56px); /* Расширяем на всю ширину контейнера */
 }
 
 /* Отключаем старые wrapper'ы */
@@ -1594,13 +1646,13 @@ td[data-column-id^="test_"] {
   width: 100%;
 }
 
-/* Основная таблица - растягиваем на всю ширину */
+/* Основная таблица */
 .table-body-wrapper table {
-  width: 100% !important;
+  width: 100%;
   min-width: 100%;
   border-collapse: collapse;
   background: var(--bg-white);
-  table-layout: auto;
+  table-layout: auto; /* Автоматический расчёт ширины */
 }
 
 /* Фиксированный заголовок */
@@ -1616,12 +1668,14 @@ td[data-column-id^="test_"] {
   position: sticky;
   top: 0;
   background: inherit;
+  padding: 12px 8px; /* Уменьшаем padding для экономии места */
+  font-size: 11px; /* Уменьшаем шрифт заголовков */
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 14px 8px;
-  font-size: 11px;
-  max-width: 150px;
+  cursor: help; /* Показываем что есть подсказка */
 }
 
 /* Тень под заголовком */
@@ -1637,32 +1691,11 @@ td[data-column-id^="test_"] {
   z-index: -1;
 }
 
-/* ВРЕМЕННО: Вертикальные границы для отладки */
-.table-body-wrapper th,
-.table-body-wrapper td {
-  border-left: 1px solid #ccc !important;
-  border-right: 1px solid #ccc !important;
-}
-
-/* Колонки адаптивные */
-.table-body-wrapper th,
-.table-body-wrapper td {
-  padding: 12px 8px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Минимальные ширины для разных типов колонок */
+/* Колонки с фиксированной минимальной шириной */
 .table-body-wrapper th[data-column-id="row_number"],
 .table-body-wrapper td[data-column-id="row_number"] {
   width: 50px;
   min-width: 50px;
-}
-
-.table-body-wrapper th[data-column-id="fio"],
-.table-body-wrapper td[data-column-id="fio"] {
-  min-width: 200px;
 }
 
 .table-body-wrapper th[data-column-id="gender"],
@@ -1683,34 +1716,28 @@ td[data-column-id^="test_"] {
   min-width: 100px;
 }
 
+/* Колонки анализов - гибкая ширина */
+.table-body-wrapper th.dynamic-test-col,
+.table-body-wrapper td[data-column-id^="test_"] {
+  width: auto;
+  min-width: 80px;
+  max-width: 150px;
+}
+
+/* ФИО и остальные - занимают оставшееся место */
+.table-body-wrapper th[data-column-id="fio"],
+.table-body-wrapper td[data-column-id="fio"] {
+  min-width: 180px;
+}
+
 .table-body-wrapper th[data-column-id="sample_id"],
 .table-body-wrapper td[data-column-id="sample_id"] {
-  min-width: 100px;
+  min-width: 110px;
 }
 
 .table-body-wrapper th[data-column-id="department"],
 .table-body-wrapper td[data-column-id="department"] {
   min-width: 150px;
-}
-
-/* Колонки анализов */
-.table-body-wrapper th.dynamic-test-col,
-.table-body-wrapper td[data-column-id^="test_"] {
-  min-width: 80px;
-  width: auto;
-}
-
-.table-body-wrapper th[data-column-id="full_result"],
-.table-body-wrapper td[data-column-id="full_result"] {
-  min-width: 200px;
-  max-width: 400px;
-  white-space: normal;
-}
-
-/* Тултип при наведении на заголовок */
-.table-body-wrapper th {
-  position: relative;
-  cursor: help;
 }
 
 /* Стилизация скроллбара для wrapper */

@@ -14,6 +14,27 @@ const state = {
   testFilters: {}  // НОВОЕ: Фильтры по анализам { "COVID-19": ["Обнаружено"], ... }
 };
 
+// Загрузка фильтров из localStorage
+function loadTestFilters() {
+  try {
+    const saved = localStorage.getItem('testFilters');
+    if (saved) {
+      state.testFilters = JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('Ошибка загрузки фильтров:', e);
+  }
+}
+
+// Сохранение фильтров в localStorage
+function saveTestFilters() {
+  try {
+    localStorage.setItem('testFilters', JSON.stringify(state.testFilters));
+  } catch (e) {
+    console.error('Ошибка сохранения фильтров:', e);
+  }
+}
+
 // Глобальные данные
 let allRecords = [];  // Все записи (до пагинации)
 let testKeyIndicators = {};  // Информация о ключевых показателях
@@ -134,6 +155,27 @@ function openTestFilter(testName, event) {
   const indicator = testKeyIndicators[testName];
   if (!indicator) return;
 
+  // Подсчитываем количество записей для каждого значения
+  const valueCounts = {};
+  indicator.possible_values.forEach(value => {
+    valueCounts[value] = 0;
+  });
+
+  allRecords.forEach(item => {
+    const tests = item.results?.tests || [];
+    for (const test of tests) {
+      if (test.test_definition_id === indicator.test_definition_id &&
+          test.rule_id === indicator.rule_id &&
+          test.is_key_indicator) {
+        const rawValue = test.raw_value;
+        if (valueCounts.hasOwnProperty(rawValue)) {
+          valueCounts[rawValue]++;
+        }
+        break;
+      }
+    }
+  });
+
   // Создаём меню фильтра
   const menu = document.createElement('div');
   menu.className = 'test-filter-menu';
@@ -180,8 +222,17 @@ function openTestFilter(testName, event) {
       }
     });
 
+    const count = valueCounts[value] || 0;
+
     label.appendChild(checkbox);
-    label.appendChild(document.createTextNode(' ' + value));
+    label.appendChild(document.createTextNode(` ${value} `));
+
+    // Добавляем счётчик записей
+    const counter = document.createElement('span');
+    counter.className = 'filter-value-count';
+    counter.textContent = `(${count})`;
+    label.appendChild(counter);
+
     valuesList.appendChild(label);
   });
 
@@ -248,6 +299,7 @@ function openTestFilter(testName, event) {
 // НОВОЕ: Применение фильтров
 function applyFilters() {
   state.page = 1;  // Сбрасываем на первую страницу
+  saveTestFilters();  // Сохраняем фильтры
   renderTable();
   updateActiveFiltersPanel();
 }
@@ -993,6 +1045,7 @@ function initTable() {
   }
 
   loadColumnSettings();
+  loadTestFilters();  // Загружаем сохранённые фильтры
 
   const perPageTop = document.getElementById("per-page-top");
 
@@ -1028,6 +1081,7 @@ function initTable() {
     state.q = state.gender = state.department = "";
     state.testFilters = {};
     state.page = 1;
+    saveTestFilters();  // Сохраняем очищенные фильтры
     loadData();
   });
 
