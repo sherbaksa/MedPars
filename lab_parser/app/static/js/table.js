@@ -306,9 +306,13 @@ function applyFilters() {
 
 // НОВОЕ: Обновление панели активных фильтров
 function updateActiveFiltersPanel() {
+  console.log('updateActiveFiltersPanel вызвана, testFilters:', state.testFilters);
+
   let panel = document.getElementById('active-filters-panel');
 
   const hasFilters = Object.keys(state.testFilters).length > 0;
+
+  console.log('hasFilters:', hasFilters);
 
   if (!hasFilters) {
     if (panel) panel.remove();
@@ -322,6 +326,7 @@ function updateActiveFiltersPanel() {
 
     const metaDiv = document.getElementById('meta');
     metaDiv.parentNode.insertBefore(panel, metaDiv.nextSibling);
+    console.log('Панель создана');
   }
 
   panel.innerHTML = '<strong>Активные фильтры анализов:</strong> ';
@@ -538,6 +543,7 @@ function handleDragLeave(e) {
 }
 
 function syncColumnWidths() {
+  console.log('syncColumnWidths() начата');
   const headerTable = document.querySelector('.table-header-wrapper table');
   const bodyTable = document.querySelector('.table-body-wrapper table');
 
@@ -603,11 +609,13 @@ function getParams() {
 }
 
 async function loadData() {
+  console.log('loadData() начата');
   const params = getParams();
   const res = await fetch(`/api/records?${params.toString()}`);
   const data = await res.json();
 
   const meta = document.getElementById("meta");
+  console.log('meta элемент в loadData:', meta);
 
   if (data.error) {
     meta.textContent = `Ошибка: ${data.error}`;
@@ -654,12 +662,16 @@ async function loadData() {
   const testColumns = data.test_columns || [];
   const rulesMap = data.rules_map || {};
 
+  console.log('testColumns получены:', testColumns.length);
+
   const headerRow = document.getElementById("table-header");
+  console.log('headerRow:', headerRow);
 
   const existingDynamicCols = headerRow.querySelectorAll('.dynamic-test-col');
   existingDynamicCols.forEach(col => col.remove());
 
   const lastTh = headerRow.querySelector('th[data-column-id="full_result"]');
+  console.log('lastTh:', lastTh);
   testColumns.forEach(testName => {
     const th = document.createElement("th");
     th.className = "dynamic-test-col";
@@ -696,13 +708,18 @@ async function loadData() {
     headerRow.insertBefore(th, lastTh);
   });
 
+  console.log('Колонки анализов добавлены:', testColumns.length);
+
   // Сохраняем все записи
   allRecords = data.items;
+  console.log('allRecords сохранены:', allRecords.length);
 
   // НОВОЕ: Сохраняем rulesMap глобально
   window.rulesMapGlobal = rulesMap;
+  console.log('rulesMapGlobal сохранён');
 
   // Проверяем есть ли непарсенные результаты
+  console.log('Начинаем проверку hasUnparsedResults');
   let hasUnparsedResults = false;
   allRecords.forEach(item => {
     const rawText = item.results?.raw_text ?? "";
@@ -747,6 +764,8 @@ async function loadData() {
     }
   });
 
+  console.log('Проверка hasUnparsedResults завершена:', hasUnparsedResults);
+
   // Скрываем/показываем колонку "Результат (полный)"
   if (hasUnparsedResults) {
     lastTh.style.display = '';
@@ -783,12 +802,19 @@ async function loadData() {
 
   const batchInfo = state.batch ? ` (файл: ${state.batch})` : '';
   meta.textContent = `Найдено: ${allRecords.length}. ${batchInfo}`;
+  console.log('Перед вызовом updateActiveFiltersPanel, state.testFilters:', state.testFilters);
+  console.log('meta элемент перед updateActiveFiltersPanel:', document.getElementById('meta'));
+  updateActiveFiltersPanel();
+  console.log('После вызова updateActiveFiltersPanel');
 }
 
 // НОВОЕ: Рендеринг таблицы с учётом фильтров и пагинации
 function renderTable() {
+  console.log('renderTable() начата');
+
   // Применяем фильтры по анализам
   let filtered = filterRecordsByTests(allRecords);
+  console.log('Отфильтровано записей:', filtered.length);
 
   const total = filtered.length;
   const start = (state.page - 1) * (state.showAll ? total : state.per_page);
@@ -971,6 +997,7 @@ function renderTable() {
   }
 
   syncColumnWidths();
+  console.log('renderTable() завершена');
 }
 
 function renderPageNumbers(position, currentPage, totalPages) {
