@@ -1,5 +1,3 @@
-// Управление настройками парсинга (анализы с множественными показателями)
-
 const modal = document.getElementById("definition-modal");
 const form = document.getElementById("definition-form");
 const addBtn = document.getElementById("add-definition-btn");
@@ -46,12 +44,10 @@ async function loadDefinitions() {
     tbody.appendChild(tr);
   });
 
-  // Обработчики для кнопок редактирования
   document.querySelectorAll(".edit-btn").forEach(btn => {
     btn.addEventListener("click", () => editDefinition(parseInt(btn.dataset.id)));
   });
 
-  // Обработчики для кнопок удаления
   document.querySelectorAll(".delete-btn").forEach(btn => {
     btn.addEventListener("click", () => deleteDefinition(parseInt(btn.dataset.id)));
   });
@@ -65,7 +61,6 @@ function createIndicatorBlock(indicator = null) {
   block.className = "indicator-block";
   block.dataset.blockId = blockId;
 
-  // Сохраняем ID показателя для обновления
   if (indicator && indicator.id) {
     block.dataset.indicatorId = indicator.id;
   }
@@ -75,7 +70,7 @@ function createIndicatorBlock(indicator = null) {
   block.innerHTML = `
     <h5>
       <span>Показатель ${indicatorNumber}</span>
-      <button type="button" class="remove-indicator-btn" data-block-id="${blockId}">✕ Удалить</button>
+      <button type="button" class="remove-indicator-btn" data-block-id="${blockId}">Удалить</button>
     </h5>
 
     <div class="form-group">
@@ -116,7 +111,6 @@ function createIndicatorBlock(indicator = null) {
     </div>
   `;
 
-  // Если передан существующий показатель, заполняем поля
   if (indicator) {
     block.querySelector(".indicator-pattern").value = indicator.indicator_pattern || "";
     block.querySelector(".variable-part").value = indicator.variable_part || "";
@@ -125,7 +119,6 @@ function createIndicatorBlock(indicator = null) {
     block.querySelector(".is-required").checked = indicator.is_required !== false;
   }
 
-  // Обработчик удаления блока
   block.querySelector(".remove-indicator-btn").addEventListener("click", (e) => {
     if (indicatorsContainer.children.length === 1) {
       alert("Нельзя удалить единственный показатель. Анализ должен иметь хотя бы один показатель.");
@@ -148,10 +141,8 @@ function updateIndicatorNumbers() {
 function openModal(title = "Добавить анализ") {
   document.getElementById("modal-title").textContent = title;
 
-  // Очищаем контейнер показателей
   indicatorsContainer.innerHTML = "";
 
-  // Добавляем один пустой показатель по умолчанию
   indicatorsContainer.appendChild(createIndicatorBlock());
 
   modal.style.display = "flex";
@@ -173,25 +164,20 @@ async function editDefinition(id) {
     return;
   }
 
-  // Открываем модалку СНАЧАЛА (без очистки контейнера показателей)
   document.getElementById("modal-title").textContent = "Изменить анализ";
   modal.style.display = "flex";
 
-  // Заполняем основные поля
   document.getElementById("definition-id").value = definition.id;
   document.getElementById("full-example-text").value = definition.full_example_text;
   document.getElementById("short-description").value = definition.short_description;
 
-  // Очищаем контейнер показателей
   indicatorsContainer.innerHTML = "";
 
-  // Добавляем блоки для каждого показателя
   if (definition.indicators && definition.indicators.length > 0) {
     definition.indicators.forEach(indicator => {
       indicatorsContainer.appendChild(createIndicatorBlock(indicator));
     });
   } else {
-    // Если показателей нет (не должно быть), добавляем один пустой
     indicatorsContainer.appendChild(createIndicatorBlock());
   }
 }
@@ -230,13 +216,11 @@ form.addEventListener("submit", async (e) => {
   const fullExampleText = document.getElementById("full-example-text").value.trim();
   const shortDescription = document.getElementById("short-description").value.trim();
 
-  // Валидация основных полей
   if (!fullExampleText || !shortDescription) {
     alert("Заполните все обязательные поля анализа");
     return;
   }
 
-  // Собираем показатели
   const indicators = [];
   const indicatorBlocks = indicatorsContainer.querySelectorAll(".indicator-block");
 
@@ -281,14 +265,12 @@ form.addEventListener("submit", async (e) => {
 
   let res;
   if (definitionId) {
-    // Обновление существующего анализа
     res = await fetch(`/api/test-definitions/${definitionId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
   } else {
-    // Создание нового анализа
     res = await fetch("/api/test-definitions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -306,5 +288,4 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-// Загрузка анализов при открытии страницы
 document.addEventListener("DOMContentLoaded", loadDefinitions);

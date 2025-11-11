@@ -1,5 +1,3 @@
-// Таблица записей - управление данными и фильтрами
-
 const urlParams = new URLSearchParams(window.location.search);
 const initialBatch = urlParams.get("batch") || "";
 
@@ -11,62 +9,47 @@ const state = {
   department: "",
   batch: initialBatch,
   showAll: false,
-  testFilters: {}  // НОВОЕ: Фильтры по анализам { "COVID-19": ["Обнаружено"], ... }
+  testFilters: {}
 };
 
-// Загрузка фильтров из localStorage
 function loadTestFilters() {
   try {
     const saved = localStorage.getItem('testFilters');
     if (saved) {
       state.testFilters = JSON.parse(saved);
     }
-  } catch (e) {
-    console.error('Ошибка загрузки фильтров:', e);
-  }
+  } catch (e) {}
 }
 
-// Сохранение фильтров в localStorage
 function saveTestFilters() {
   try {
     localStorage.setItem('testFilters', JSON.stringify(state.testFilters));
-  } catch (e) {
-    console.error('Ошибка сохранения фильтров:', e);
-  }
+  } catch (e) {}
 }
 
-// Глобальные данные
-let allRecords = [];  // Все записи (до пагинации)
-let testKeyIndicators = {};  // Информация о ключевых показателях
+let allRecords = [];
+let testKeyIndicators = {};
 
-// Настройки колонок (порядок и видимость)
 let columnSettings = {
   order: [],
   hidden: []
 };
 
-// Загрузка настроек колонок из localStorage
 function loadColumnSettings() {
   try {
     const saved = localStorage.getItem('tableColumnSettings');
     if (saved) {
       columnSettings = JSON.parse(saved);
     }
-  } catch (e) {
-    console.error('Ошибка загрузки настроек колонок:', e);
-  }
+  } catch (e) {}
 }
 
-// Сохранение настроек колонок в localStorage
 function saveColumnSettings() {
   try {
     localStorage.setItem('tableColumnSettings', JSON.stringify(columnSettings));
-  } catch (e) {
-    console.error('Ошибка сохранения настроек колонок:', e);
-  }
+  } catch (e) {}
 }
 
-// Получение всех колонок (статических и динамических)
 function getAllColumns() {
   const headerRow = document.getElementById("table-header");
   const columns = [];
@@ -82,7 +65,6 @@ function getAllColumns() {
   return columns;
 }
 
-// Применение настроек колонок к таблице
 function applyColumnSettings() {
   const headerRow = document.getElementById("table-header");
   const allColumns = getAllColumns();
@@ -145,17 +127,14 @@ function applyColumnSettings() {
   saveColumnSettings();
 }
 
-// НОВОЕ: Открытие фильтра для колонки анализа
 function openTestFilter(testName, event) {
   event.stopPropagation();
 
-  // Закрываем все открытые фильтры
   document.querySelectorAll('.test-filter-menu').forEach(menu => menu.remove());
 
   const indicator = testKeyIndicators[testName];
   if (!indicator) return;
 
-  // Подсчитываем количество записей для каждого значения
   const valueCounts = {};
   indicator.possible_values.forEach(value => {
     valueCounts[value] = 0;
@@ -176,11 +155,9 @@ function openTestFilter(testName, event) {
     }
   });
 
-  // Создаём меню фильтра
   const menu = document.createElement('div');
   menu.className = 'test-filter-menu';
 
-  // Заголовок
   const header = document.createElement('div');
   header.className = 'filter-menu-header';
   header.innerHTML = `
@@ -189,7 +166,6 @@ function openTestFilter(testName, event) {
   `;
   menu.appendChild(header);
 
-  // Список значений с чекбоксами
   const valuesList = document.createElement('div');
   valuesList.className = 'filter-values-list';
 
@@ -227,7 +203,6 @@ function openTestFilter(testName, event) {
     label.appendChild(checkbox);
     label.appendChild(document.createTextNode(` ${value} `));
 
-    // Добавляем счётчик записей
     const counter = document.createElement('span');
     counter.className = 'filter-value-count';
     counter.textContent = `(${count})`;
@@ -238,7 +213,6 @@ function openTestFilter(testName, event) {
 
   menu.appendChild(valuesList);
 
-  // Кнопки действий
   const actions = document.createElement('div');
   actions.className = 'filter-menu-actions';
 
@@ -275,7 +249,6 @@ function openTestFilter(testName, event) {
   actions.appendChild(applyBtn);
   menu.appendChild(actions);
 
-  // Позиционируем меню под иконкой
   const icon = event.currentTarget;
   const rect = icon.getBoundingClientRect();
   menu.style.position = 'fixed';
@@ -284,7 +257,6 @@ function openTestFilter(testName, event) {
 
   document.body.appendChild(menu);
 
-  // Закрытие при клике вне меню
   setTimeout(() => {
     const closeHandler = (e) => {
       if (!menu.contains(e.target) && e.target !== icon) {
@@ -296,23 +268,17 @@ function openTestFilter(testName, event) {
   }, 0);
 }
 
-// НОВОЕ: Применение фильтров
 function applyFilters() {
-  state.page = 1;  // Сбрасываем на первую страницу
-  saveTestFilters();  // Сохраняем фильтры
+  state.page = 1;
+  saveTestFilters();
   renderTable();
   updateActiveFiltersPanel();
 }
 
-// НОВОЕ: Обновление панели активных фильтров
 function updateActiveFiltersPanel() {
-  console.log('updateActiveFiltersPanel вызвана, testFilters:', state.testFilters);
-
   let panel = document.getElementById('active-filters-panel');
 
   const hasFilters = Object.keys(state.testFilters).length > 0;
-
-  console.log('hasFilters:', hasFilters);
 
   if (!hasFilters) {
     if (panel) panel.remove();
@@ -326,7 +292,6 @@ function updateActiveFiltersPanel() {
 
     const metaDiv = document.getElementById('meta');
     metaDiv.parentNode.insertBefore(panel, metaDiv.nextSibling);
-    console.log('Панель создана');
   }
 
   panel.innerHTML = '<strong>Активные фильтры анализов:</strong> ';
@@ -365,42 +330,36 @@ function updateActiveFiltersPanel() {
   panel.appendChild(clearAllBtn);
 }
 
-// НОВОЕ: Фильтрация записей по анализам
 function filterRecordsByTests(records) {
   if (Object.keys(state.testFilters).length === 0) {
     return records;
   }
 
   return records.filter(item => {
-    // Режим ИЛИ: запись подходит если соответствует ХОТЯ БЫ ОДНОМУ фильтру
     for (const testName in state.testFilters) {
       const filterValues = state.testFilters[testName];
       if (!filterValues || filterValues.length === 0) continue;
 
-      // Ищем ключевой показатель этого анализа в записи
       const tests = item.results?.tests || [];
       const indicator = testKeyIndicators[testName];
       if (!indicator) continue;
 
       for (const test of tests) {
-        // Проверяем что это нужный анализ и ключевой показатель
         if (test.test_definition_id === indicator.test_definition_id &&
             test.rule_id === indicator.rule_id &&
             test.is_key_indicator) {
-          // Проверяем значение
           const rawValue = test.raw_value;
           if (filterValues.includes(rawValue)) {
-            return true;  // Найдено совпадение - показываем запись
+            return true;
           }
         }
       }
     }
 
-    return false;  // Не найдено совпадений ни по одному фильтру
+    return false;
   });
 }
 
-// Открытие модального окна настроек колонок
 function openColumnSettings() {
   const modal = document.getElementById('column-settings-modal');
   const columnsList = document.getElementById('columns-list');
@@ -543,7 +502,6 @@ function handleDragLeave(e) {
 }
 
 function syncColumnWidths() {
-  console.log('syncColumnWidths() начата');
   const headerTable = document.querySelector('.table-header-wrapper table');
   const bodyTable = document.querySelector('.table-body-wrapper table');
 
@@ -609,13 +567,11 @@ function getParams() {
 }
 
 async function loadData() {
-  console.log('loadData() начата');
   const params = getParams();
   const res = await fetch(`/api/records?${params.toString()}`);
   const data = await res.json();
 
   const meta = document.getElementById("meta");
-  console.log('meta элемент в loadData:', meta);
 
   if (data.error) {
     meta.textContent = `Ошибка: ${data.error}`;
@@ -634,10 +590,8 @@ async function loadData() {
     state.batch = data.batch;
   }
 
-  // НОВОЕ: Сохраняем информацию о ключевых показателях
   testKeyIndicators = data.test_key_indicators || {};
 
-  // Сохраняем rulesMap глобально для использования в renderTable
   window.rulesMapGlobal = data.rules_map || {};
 
   const gSel = document.getElementById("gender");
@@ -662,35 +616,27 @@ async function loadData() {
   const testColumns = data.test_columns || [];
   const rulesMap = data.rules_map || {};
 
-  console.log('testColumns получены:', testColumns.length);
-
   const headerRow = document.getElementById("table-header");
-  console.log('headerRow:', headerRow);
 
   const existingDynamicCols = headerRow.querySelectorAll('.dynamic-test-col');
   existingDynamicCols.forEach(col => col.remove());
 
   const lastTh = headerRow.querySelector('th[data-column-id="full_result"]');
-  console.log('lastTh:', lastTh);
   testColumns.forEach(testName => {
     const th = document.createElement("th");
     th.className = "dynamic-test-col";
     th.setAttribute('data-column-id', `test_${testName}`);
 
-    // НОВОЕ: Добавляем подсказку к заголовку
     let tooltipText = testName;
 
-    // НОВОЕ: Добавляем иконку фильтра если есть ключевой показатель
     if (testKeyIndicators[testName]) {
       const filterIcon = document.createElement('span');
       filterIcon.className = 'filter-icon';
       filterIcon.textContent = '▼';
       filterIcon.title = 'Фильтр';
 
-      // Проверяем активен ли фильтр
       if (state.testFilters[testName] && state.testFilters[testName].length > 0) {
         filterIcon.classList.add('filter-active');
-        // Добавляем в подсказку информацию о фильтре
         tooltipText += '\nФильтр: ' + state.testFilters[testName].join(', ');
       }
 
@@ -702,24 +648,15 @@ async function loadData() {
       th.textContent = testName;
     }
 
-    // Устанавливаем подсказку
     th.title = tooltipText;
 
     headerRow.insertBefore(th, lastTh);
   });
 
-  console.log('Колонки анализов добавлены:', testColumns.length);
-
-  // Сохраняем все записи
   allRecords = data.items;
-  console.log('allRecords сохранены:', allRecords.length);
 
-  // НОВОЕ: Сохраняем rulesMap глобально
   window.rulesMapGlobal = rulesMap;
-  console.log('rulesMapGlobal сохранён');
 
-  // Проверяем есть ли непарсенные результаты
-  console.log('Начинаем проверку hasUnparsedResults');
   let hasUnparsedResults = false;
   allRecords.forEach(item => {
     const rawText = item.results?.raw_text ?? "";
@@ -764,19 +701,14 @@ async function loadData() {
     }
   });
 
-  console.log('Проверка hasUnparsedResults завершена:', hasUnparsedResults);
-
-  // Скрываем/показываем колонку "Результат (полный)"
   if (hasUnparsedResults) {
     lastTh.style.display = '';
   } else {
     lastTh.style.display = 'none';
   }
 
-  // Сохраняем флаг глобально для использования в renderTable
   window.hasUnparsedResultsGlobal = hasUnparsedResults;
 
-  // Рендерим таблицу
   renderTable();
 
   applyColumnSettings();
@@ -802,19 +734,11 @@ async function loadData() {
 
   const batchInfo = state.batch ? ` (файл: ${state.batch})` : '';
   meta.textContent = `Найдено: ${allRecords.length}. ${batchInfo}`;
-  console.log('Перед вызовом updateActiveFiltersPanel, state.testFilters:', state.testFilters);
-  console.log('meta элемент перед updateActiveFiltersPanel:', document.getElementById('meta'));
   updateActiveFiltersPanel();
-  console.log('После вызова updateActiveFiltersPanel');
 }
 
-// НОВОЕ: Рендеринг таблицы с учётом фильтров и пагинации
 function renderTable() {
-  console.log('renderTable() начата');
-
-  // Применяем фильтры по анализам
   let filtered = filterRecordsByTests(allRecords);
-  console.log('Отфильтровано записей:', filtered.length);
 
   const total = filtered.length;
   const start = (state.page - 1) * (state.showAll ? total : state.per_page);
@@ -855,7 +779,6 @@ function renderTable() {
       const indicators = testsByDefinition[defId];
       const testName = indicators[0].name.split('-')[0];
 
-      // Показываем ВСЕ значения показателей
       const values = indicators.map(ind => ind.value).filter(Boolean);
 
       if (testValues[testName] !== undefined) {
@@ -863,7 +786,6 @@ function renderTable() {
       }
     }
 
-    // Получаем rulesMap из глобального контекста (нужно его сохранить при загрузке)
     let filteredText = rawText;
 
     const parsedDefinitions = {};
@@ -875,7 +797,6 @@ function renderTable() {
       parsedDefinitions[defId].push(test);
     });
 
-    // Используем ту же логику что была в оригинале
     for (const defId in parsedDefinitions) {
       const indicators = parsedDefinitions[defId];
       indicators.forEach(test => {
@@ -924,7 +845,6 @@ function renderTable() {
       testColumnsCells += `<td data-column-id="test_${testName}">${cellContent}</td>`;
     });
 
-    // ИСПРАВЛЕНИЕ: Применяем флаг hasUnparsedResults к колонке
     const resultCellStyle = window.hasUnparsedResultsGlobal ? '' : 'style="display:none;"';
 
     tr.innerHTML = `
@@ -971,7 +891,6 @@ function renderTable() {
     });
   });
 
-  // Пагинация
   const totalPages = Math.ceil(total / state.per_page);
   const endItem = Math.min(end, total);
 
@@ -997,7 +916,6 @@ function renderTable() {
   }
 
   syncColumnWidths();
-  console.log('renderTable() завершена');
 }
 
 function renderPageNumbers(position, currentPage, totalPages) {
@@ -1065,14 +983,13 @@ function initTable() {
 
   for (const id of requiredElements) {
     if (!document.getElementById(id)) {
-      console.error(`Element with id "${id}" not found. Retrying...`);
       setTimeout(initTable, 100);
       return;
     }
   }
 
   loadColumnSettings();
-  loadTestFilters();  // Загружаем сохранённые фильтры
+  loadTestFilters();
 
   const perPageTop = document.getElementById("per-page-top");
 
@@ -1108,7 +1025,7 @@ function initTable() {
     state.q = state.gender = state.department = "";
     state.testFilters = {};
     state.page = 1;
-    saveTestFilters();  // Сохраняем очищенные фильтры
+    saveTestFilters();
     loadData();
   });
 

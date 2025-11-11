@@ -8,18 +8,15 @@ def create_app():
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.abspath(os.path.join(base_dir, ".."))
-    static_root = os.path.join(project_root, "static")  # если static вне app/
 
     app = Flask(
         __name__,
-#        static_folder=static_root,
         template_folder=os.path.join(base_dir, "templates"),
-        instance_path=os.path.join(project_root, "instance"),  # явно укажем instance/
+        instance_path=os.path.join(project_root, "instance"),
         instance_relative_config=True
     )
     app.config.from_object(BaseConfig)
 
-    # Гарантируем наличие директории для загрузок внутри instance/
     uploads_dir = os.path.join(app.instance_path, app.config["INSTANCE_UPLOADS_SUBDIR"])
     os.makedirs(uploads_dir, exist_ok=True)
 
