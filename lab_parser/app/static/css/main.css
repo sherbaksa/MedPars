@@ -739,10 +739,11 @@ code {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-wrap: break-word;
   cursor: help;
+  vertical-align: top;
+  line-height: 1.3;
 }
 
 .table-body-wrapper table thead::after {
