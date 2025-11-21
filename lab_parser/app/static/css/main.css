@@ -694,14 +694,14 @@ code {
 }
 
 .table-wrapper {
-  margin: 20px -28px;
+  margin: 20px 0;
   padding: 0;
   position: relative;
   border-radius: 8px;
   max-height: calc(100vh - 240px);
   min-height: 400px;
   overflow: auto;
-  width: calc(100% + 56px);
+  width: 100%;
 }
 
 .table-header-wrapper {
@@ -710,7 +710,7 @@ code {
 
 .table-body-wrapper {
   overflow: visible !important;
-  padding: 0 28px;
+  padding: 0;
   flex: none !important;
   width: 100%;
 }
@@ -926,8 +926,9 @@ td[data-column-id^="test_"] {
 }
 
 .dynamic-test-col {
-  white-space: nowrap !important;
+  white-space: normal !important;
   overflow: visible !important;
+  word-wrap: break-word !important;
 }
 
 .filter-icon {

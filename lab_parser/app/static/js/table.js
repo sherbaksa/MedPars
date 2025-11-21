@@ -67,14 +67,28 @@ function getAllColumns() {
 
 function applyColumnSettings() {
   const headerRow = document.getElementById("table-header");
+  const tbody = document.querySelector("#records tbody");
   const allColumns = getAllColumns();
 
+  // Очищаем order от несуществующих колонок
+  const existingColumnIds = allColumns.map(col => col.id);
+  columnSettings.order = columnSettings.order.filter(id => existingColumnIds.includes(id));
+  columnSettings.hidden = columnSettings.hidden.filter(id => existingColumnIds.includes(id));
+
+  // Если order пустой или неполный, заполняем текущим порядком из DOM
   if (columnSettings.order.length === 0) {
     columnSettings.order = allColumns.map(col => col.id);
+  } else {
+    // Добавляем новые колонки (которых нет в order) в конец
+    allColumns.forEach(col => {
+      if (!columnSettings.order.includes(col.id)) {
+        columnSettings.order.push(col.id);
+      }
+    });
   }
 
+  // Перестраиваем заголовки
   const newOrder = [];
-
   columnSettings.order.forEach(colId => {
     const th = headerRow.querySelector(`th[data-column-id="${colId}"]`);
     if (th) {
@@ -82,20 +96,34 @@ function applyColumnSettings() {
     }
   });
 
-  allColumns.forEach(col => {
-    if (!columnSettings.order.includes(col.id)) {
-      const th = headerRow.querySelector(`th[data-column-id="${col.id}"]`);
-      if (th) {
-        newOrder.push(th);
-        columnSettings.order.push(col.id);
-      }
-    }
-  });
-
   headerRow.innerHTML = '';
   newOrder.forEach(th => headerRow.appendChild(th));
 
-  allColumns.forEach((col, index) => {
+  // Перестраиваем каждую строку данных в том же порядке
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const cells = {};
+
+    // Собираем все ячейки по их column-id
+    tr.querySelectorAll('td').forEach(td => {
+      const columnId = td.getAttribute('data-column-id');
+      if (columnId) {
+        cells[columnId] = td;
+      }
+    });
+
+    // Очищаем строку
+    tr.innerHTML = '';
+
+    // Добавляем ячейки в новом порядке
+    columnSettings.order.forEach(colId => {
+      if (cells[colId]) {
+        tr.appendChild(cells[colId]);
+      }
+    });
+  });
+
+  // Применяем скрытие колонок
+  allColumns.forEach((col) => {
     const isHidden = columnSettings.hidden.includes(col.id);
     const th = headerRow.querySelector(`th[data-column-id="${col.id}"]`);
 
@@ -107,18 +135,13 @@ function applyColumnSettings() {
       }
     }
 
-    const tbody = document.querySelector("#records tbody");
     tbody.querySelectorAll('tr').forEach(tr => {
-      const cells = tr.querySelectorAll('td');
-      const colIndex = Array.from(headerRow.querySelectorAll('th')).findIndex(
-        th => th.getAttribute('data-column-id') === col.id
-      );
-
-      if (colIndex >= 0 && cells[colIndex]) {
+      const td = tr.querySelector(`td[data-column-id="${col.id}"]`);
+      if (td) {
         if (isHidden) {
-          cells[colIndex].classList.add('hidden-column');
+          td.classList.add('hidden-column');
         } else {
-          cells[colIndex].classList.remove('hidden-column');
+          td.classList.remove('hidden-column');
         }
       }
     });
@@ -502,17 +525,13 @@ function handleDragLeave(e) {
 }
 
 function syncColumnWidths() {
-  const headerTable = document.querySelector('.table-header-wrapper table');
   const bodyTable = document.querySelector('.table-body-wrapper table');
+  if (!bodyTable) return;
 
-  if (!headerTable || !bodyTable) return;
+  const tbody = bodyTable.querySelector('tbody');
+  if (!tbody || tbody.rows.length === 0) return;
 
-  const headerCells = headerTable.querySelectorAll('thead th');
-  const bodyRows = bodyTable.querySelectorAll('tbody tr');
-
-  if (bodyRows.length === 0) return;
-
-  const bodyCells = bodyRows[0].querySelectorAll('td');
+  const headerCells = bodyTable.querySelectorAll('thead th');
 
   headerCells.forEach(cell => {
     cell.style.width = '';
@@ -520,38 +539,56 @@ function syncColumnWidths() {
     cell.style.maxWidth = '';
   });
 
-  bodyCells.forEach(cell => {
-    cell.style.width = '';
-    cell.style.minWidth = '';
-    cell.style.maxWidth = '';
+  const rowsToSample = Math.min(10, tbody.rows.length);
+  const columnWidths = {};
+
+  headerCells.forEach((th, index) => {
+    const columnId = th.getAttribute('data-column-id');
+    if (!columnId) return;
+
+    let maxWidth = 0;
+
+    for (let i = 0; i < rowsToSample; i++) {
+      const cell = tbody.rows[i].cells[index];
+      if (cell) {
+        cell.style.width = 'auto';
+        const tempWidth = cell.scrollWidth;
+        maxWidth = Math.max(maxWidth, tempWidth);
+      }
+    }
+
+    if (columnId === 'fio') {
+      columnWidths[columnId] = Math.max(maxWidth + 20, 200);
+    } else if (columnId.startsWith('test_')) {
+      columnWidths[columnId] = Math.max(maxWidth + 10, 90);
+    } else if (columnId === 'full_result') {
+      columnWidths[columnId] = null;
+    } else {
+      columnWidths[columnId] = maxWidth + 10;
+    }
   });
 
   requestAnimationFrame(() => {
-    const widths = [];
-    bodyCells.forEach(cell => {
-      widths.push(cell.offsetWidth);
-    });
+    headerCells.forEach((th, index) => {
+      const columnId = th.getAttribute('data-column-id');
+      if (!columnId) return;
 
-    headerCells.forEach((cell, index) => {
-      if (widths[index]) {
-        const width = widths[index] + 'px';
-        cell.style.width = width;
-        cell.style.minWidth = width;
-        cell.style.maxWidth = width;
+      const width = columnWidths[columnId];
+      if (width !== null && width !== undefined) {
+        th.style.width = width + 'px';
+        th.style.minWidth = width + 'px';
+        th.style.maxWidth = width + 'px';
+
+        for (let i = 0; i < tbody.rows.length; i++) {
+          const cell = tbody.rows[i].cells[index];
+          if (cell) {
+            cell.style.width = width + 'px';
+            cell.style.minWidth = width + 'px';
+            cell.style.maxWidth = width + 'px';
+          }
+        }
       }
     });
-
-    bodyCells.forEach((cell, index) => {
-      if (widths[index]) {
-        const width = widths[index] + 'px';
-        cell.style.width = width;
-        cell.style.minWidth = width;
-        cell.style.maxWidth = width;
-      }
-    });
-
-    const bodyTableWidth = bodyTable.offsetWidth;
-    headerTable.style.width = bodyTableWidth + 'px';
   });
 }
 
@@ -712,15 +749,6 @@ async function loadData() {
   renderTable();
 
   applyColumnSettings();
-
-  const headerWrapper = document.querySelector('.table-header-wrapper');
-  const bodyWrapper = document.querySelector('.table-body-wrapper');
-
-  if (headerWrapper && bodyWrapper) {
-    bodyWrapper.addEventListener('scroll', () => {
-      headerWrapper.scrollLeft = bodyWrapper.scrollLeft;
-    });
-  }
 
   syncColumnWidths();
 
