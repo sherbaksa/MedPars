@@ -1,9 +1,20 @@
 {% extends "base.html" %}
 {% block title %}Отчёт · MedPars{% endblock %}
 {% block content %}
-  <h2>Отчёт (черновик)</h2>
-  <p>Сводные показатели и таблицы появятся здесь. Верстка дружелюбна к печати.</p>
-  <div class="no-print" style="margin-top:12px;">
-    <button onclick="window.print()">Печать</button>
+  <div class="content-card">
+    <h2>Отчёт для печати</h2>
+
+    <div id="report-info" style="margin-bottom: 16px; color: var(--text-secondary);"></div>
+
+    <div class="controls no-print">
+      <button onclick="window.print()">Печать</button>
+      <button onclick="window.close()" class="secondary">Закрыть</button>
+    </div>
+
+    <div id="report-content">
+      <p>Загрузка данных...</p>
+    </div>
   </div>
+
+  <script src="{{ url_for('static', filename='js/report.js') }}"></script>
 {% endblock %}

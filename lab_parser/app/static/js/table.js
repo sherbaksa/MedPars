@@ -1080,6 +1080,32 @@ function initTable() {
   });
 
   loadData();
+  // Обработчик кнопки "Печать" - формирует отчет
+  document.getElementById("print-report-btn").addEventListener("click", () => {
+    const params = new URLSearchParams();
+
+    // Базовые фильтры
+    if (state.q) params.set("q", state.q);
+    if (state.gender) params.set("gender", state.gender);
+    if (state.department) params.set("department", state.department);
+    if (state.batch) params.set("batch", state.batch);
+
+    // Фильтры по тестам (JSON)
+    if (Object.keys(state.testFilters).length > 0) {
+      params.set("testFilters", JSON.stringify(state.testFilters));
+    }
+
+    // Настройки колонок (порядок и скрытые)
+    if (columnSettings.order.length > 0) {
+      params.set("columnOrder", JSON.stringify(columnSettings.order));
+    }
+    if (columnSettings.hidden.length > 0) {
+      params.set("columnHidden", JSON.stringify(columnSettings.hidden));
+    }
+
+    // Открываем отчет в новой вкладке
+    window.open(`/report?${params.toString()}`, '_blank');
+  });
 }
 
 document.addEventListener('DOMContentLoaded', initTable);
